@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 
 class CodeRepresentationPort(ABC):
-
     """
     An interface for getting the actual Merge Request diff.
     In the MVP it will be plain diff (PlainDiffAdapter), later might switch to
@@ -10,5 +9,4 @@ class CodeRepresentationPort(ABC):
     """
 
     @abstractmethod
-    def get_code(self):
-        ...
+    def get_code(self): ...

@@ -2,20 +2,27 @@
 
 version: '3'
 
-dotenv: ['.env']
 
 tasks:
+  run-test:
+    desc: Runs test script that fetches the actual data from GitLab API
+    cmds:
+      - ./test_local.sh
+
   run-linters:
     desc: Run linters and type checker
     cmds:
       - uv run ruff check --fix && uv run ruff format && uv run ty check
+    dotenv: ['.env.test']
 
   run-engine:
     desc: Run AI Code Review Engine
     cmds:
       - uv run main.py
+    dotenv: ['.env']
   
   run-indexer:
     desc: Run repo indexer
     cmds:
       - echo "Run indexer"
+    dotenv: ['.env']

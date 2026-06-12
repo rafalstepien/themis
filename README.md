@@ -2,9 +2,8 @@
 
 # ⚖️ Themis
 
-### ⚡ The GitLab-native, AI code reviewer that runs entirely on your private CI runners. Zero data leaks, zero linter noise.
-
-### 🔒 This tool is entirely non-agentic and follows a strict Bring-Your-Own-Key (BYOK) model.
+### ⚡ The GitLab-native, AI code reviewer that runs entirely on your private CI runners.
+### 🔒 Entirely non-agentic, follows a strict Bring-Your-Own-Key (BYOK) model.
 - Zero Third-Party Infra: Execution happens 100% inside your GitLab CI runners.
 - Data Isolation: Your source code never leaves your corporate boundary or hits an external SaaS dashboard.
 - LLM Transparency: It connects directly to your enterprise LLM provider via masked environment variables.

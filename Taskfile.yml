@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+dotenv: ['.env']
+
+tasks:
+  run-linters:
+    desc: Run linters and type checker
+    cmds:
+      - uv run ruff check --fix && uv run ruff format && uv run ty check
+
+  run-engine:
+    desc: Run AI Code Review Engine
+    cmds:
+      - uv run main.py
+  
+  run-indexer:
+    desc: Run repo indexer
+    cmds:
+      - echo "Run indexer"

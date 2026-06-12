@@ -1,0 +1,9 @@
+from src.review_engine.ports.outbound import GitLabPort
+
+
+class GitLabClient(GitLabPort):
+    def __init__(self, token): ...
+
+    def get_changed_files(self): ...
+
+    def get_file_content(self) -> str: ...

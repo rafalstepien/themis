@@ -1,0 +1,46 @@
+[project]
+name = "themis"
+version = "0.1.0"
+description = "GitLab-native AI code review validation gate that analyzes Merge Requests for logic bugs, security vulnerabilities, and architectural errors"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "click>=8.4.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+    "ruff>=0.15.16",
+    "ty>=0.0.49",
+]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 120
+exclude = [
+    ".git",
+    ".cache",
+    ".venv",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",  # Pyflakes and pycodestyle (defaults)
+    "F",  # Pyflakes and pycodestyle (defaults)
+    "I", # I = isort
+    "B", # B = flake8-bugbear
+]
+ignore = [
+    "E501", # Ignore line-length violations (let ruff format handle it)
+]
+
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.lint.isort]
+# known-first-party = ["my_project_name"]  # Automatically group your project's internal packages into the "first-party" section
+combine-as-imports = true  # Force multiple from imports from the same module onto a single line
+force-sort-within-sections = true  # Forces standard library imports to be sorted alphabetically rather than by length

@@ -1,0 +1,6 @@
+[[rules]]
+id = "django-001"
+severity = "high"
+title = "N+1 query in loop"
+guidance = "Use select_related() or prefetch_related() when accessing related objects in a loop."
+references = ["https://docs.djangoproject.com/en/stable/ref/models/querysets/#select-related"]

@@ -1,0 +1,3 @@
+class IndexerCLIAdapter:
+    def run(self) -> None:
+        ...

@@ -3,6 +3,8 @@ import os
 import sys
 from typing import Any, Dict
 
+from src.review_engine.adapters.outbound import GitLabClient
+
 
 class ReviewEngineCLIAdapter:
     """
@@ -11,11 +13,12 @@ class ReviewEngineCLIAdapter:
     """
 
     def run(self) -> None:
-        config = self._load_config()
-        gitlab_token, llm_token, jira_token = self._extract_secrets()
+        secrets = self._parse_gitlab_secrets()
+        mr_output = self._fetch_mr_data_from_gitlab(secrets)
+        print(mr_output.model_dump_json(indent=2))
+
 
     #     # 3. Instantiate Outbound Adapters
-    #     gitlab_client = GitLabClient(token=gitlab_token)
     #     llm_client = OpenAIClient(token=llm_token)
     #     ast_parser = ASTEngine()
     #     jira_client = JiraClient(token=jira_token) if jira_token else None
@@ -38,20 +41,36 @@ class ReviewEngineCLIAdapter:
     #     )
 
     @staticmethod
-    def _extract_secrets():
-        gitlab_token = os.getenv("GITLAB_API_TOKEN")
-        if not gitlab_token:
-            print("CRITICAL: Missing essential GITLAB_API_TOKEN")
-            sys.exit(1)
+    def _fetch_mr_data_from_gitlab(gitlab_secrets: dict):
+        gitlab_api_base = os.getenv("CI_API_V4_URL")
 
-        llm_token = os.getenv("LLM_API_TOKEN")
-        if not llm_token:
-            print("CRITICAL: Missing essential LLM_API_TOKEN")
-            sys.exit(1)
+        gitlab_client = GitLabClient(
+            token=gitlab_secrets["gitlab_token"], 
+            api_base=gitlab_api_base
+        )
 
-        jira_token = os.getenv("JIRA_API_TOKEN")
+        return gitlab_client.get_mr_data(
+            project_id=gitlab_secrets["project_id"], 
+            mr_iid=int(gitlab_secrets["mr_iid"])
+        )
 
-        return gitlab_token, llm_token, jira_token
+
+    @staticmethod
+    def _parse_gitlab_secrets():
+        secret_to_env_var_mapping = {
+            "gitlab_token": "GITLAB_API_TOKEN",
+            "project_id": "CI_PROJECT_ID",
+            "mr_iid": "CI_MERGE_REQUEST_IID",
+        }
+
+        secrets = {}
+        for secret, env_var in secret_to_env_var_mapping.items():
+            secret_value = os.getenv(env_var)
+            if not secret_value:
+                print(f"CRITICAL: Missing essential {env_var}")
+                sys.exit(1)
+            secrets[secret] = secret_value
+        return secrets
 
     def _load_config(self) -> Dict[str, Any]:
         try:

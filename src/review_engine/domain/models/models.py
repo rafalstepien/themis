@@ -1,19 +1,20 @@
 from dataclasses import dataclass
 
-# class ChangedFile:  # Entity
-#     def __init__(self, file_path: str, raw_content: str):
-#         self.file_path = file_path  # Unique Identity
-#         self.raw_content = raw_content
-#         self.ast_chunks: list[dict] = []  # Internal state
 
-#     def assign_chunks(self, chunks: list[dict]) -> None:
-#         if not chunks:
-#             raise ValueError(f"Cannot assign empty chunks to {self.file_path}")
-#         self.ast_chunks = chunks
+class ChangedFile:  # Entity
+    def __init__(self, file_path: str, raw_content: str):
+        self.file_path = file_path  # Unique Identity
+        self.raw_content = raw_content
+        self.ast_chunks: list[dict] = []  # Internal state
 
-#     @property
-#     def file_extension(self) -> str:
-#         return self.file_path.split(".")[-1] if "." in self.file_path else ""
+    def assign_chunks(self, chunks: list[dict]) -> None:
+        if not chunks:
+            raise ValueError(f"Cannot assign empty chunks to {self.file_path}")
+        self.ast_chunks = chunks
+
+    @property
+    def file_extension(self) -> str:
+        return self.file_path.split(".")[-1] if "." in self.file_path else ""
 
 
 @dataclass(frozen=True)
@@ -21,6 +22,7 @@ class AnalysisContext:  # Value Object
     """
     Sourced from rules.json, architecture.json and Jira API
     """
+
     past_mr_rules: dict
     architecture_rules: dict
     business_context: str

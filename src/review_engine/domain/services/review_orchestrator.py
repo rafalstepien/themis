@@ -35,13 +35,9 @@ class ReviewOrchestrator:
 
         analysis_context = AnalysisContext(
             code=self.code_representation_port.get_code(),
-            architecture_rules=self.gitlab_port.get_file_content(
-                mr.module, "architecture.json"
-            ),
+            architecture_rules=self.gitlab_port.get_file_content(mr.module, "architecture.json"),
             past_mr_rules=self.gitlab_port.get_file_content(mr.module, "rules.json"),
-            business_context=self.business_context_port.get_business_context(
-                mr.ticket_id
-            ),
+            business_context=self.business_context_port.get_business_context(mr.ticket_id),
             best_practices_context=self.best_practices_port.get_applicable_best_practices(
                 mr.technologies
             ),

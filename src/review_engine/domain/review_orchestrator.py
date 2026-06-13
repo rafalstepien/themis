@@ -1,7 +1,6 @@
 from src.review_engine.ports.outbound import (
     BestPracticesPort,
     BusinessContextPort,
-    CodeRepresentationPort,
     GitLabPort,
     LLMPort,
 )
@@ -12,13 +11,11 @@ class ReviewOrchestrator:
         self,
         gitlab_port: GitLabPort,
         llm_port: LLMPort,
-        code_representation_port: CodeRepresentationPort,
         business_context_port: BusinessContextPort,
         best_practices_port: BestPracticesPort,
     ):
         self.gitlab_port = gitlab_port
         self.llm_port = llm_port
-        self.code_representation_port = code_representation_port
         self.business_context_port = business_context_port
         self.best_practices_port = best_practices_port
 

@@ -1,4 +1,4 @@
-from .ast_adapter import ASTAdapter
+from .best_practices_client import BestPracticesClient
 from .gitlab import GitLabClient
 from .jira_client import JiraClient
 from .openai_client import OpenAIClient
@@ -11,4 +11,5 @@ __all__ = [
     "GitLabClient",
     "JiraClient",
     "OpenAIClient",
+    "BestPracticesClient",
 ]

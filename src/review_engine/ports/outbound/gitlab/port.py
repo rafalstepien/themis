@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 
-from .models import MergeRequestData
+from src.review_engine.domain.models import MergeRequest
 
 
 class GitLabPort(ABC):
     @abstractmethod
-    def get_mr_data(self, project_id: int | str, mr_iid: int) -> MergeRequestData:
+    def get_mr_data(self) -> MergeRequest:
         """Fetch merge request data including all file changes from GitLab API."""
         ...
 

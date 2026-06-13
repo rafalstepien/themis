@@ -16,7 +16,7 @@ class FileDiff(BaseModel):
     deletions: int | None = None
 
 
-class MergeRequestData(BaseModel):
+class MergeRequestDTO(BaseModel):
     """Represents complete merge request data from GitLab API."""
 
     mr_iid: int

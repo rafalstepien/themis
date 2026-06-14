@@ -23,7 +23,7 @@ set +a
 
 echo "🚀 Running engine with simulated GitLab CI environment..."
 echo "   Project: $CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME (ID: $CI_PROJECT_ID)"
-echo "   MR ID: $CI_MERGE_REQUEST_ID"
+echo "   MR ID: $CI_MERGE_REQUEST_IID"
 echo "   Branch: $CI_MERGE_REQUEST_SOURCE_BRANCH → $CI_MERGE_REQUEST_TARGET_BRANCH"
 echo ""
 

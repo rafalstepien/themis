@@ -62,21 +62,21 @@ class MergeRequest:  # Aggregate Root
     @classmethod
     def create(
         cls,
-        id: str,
+        mr_id: str,
         source_branch: str,
         target_branch: str,
         title: str,
         description: str,
         files: list[ChangedFile],
     ) -> "MergeRequest":
-        if not id:
+        if not mr_id:
             raise ValueError("id cannot be empty")
         if not target_branch:
             raise ValueError("target_branch cannot be empty")
         if not source_branch:
             raise ValueError("source_branch cannot be empty")
         return cls(
-            mr_id=id,
+            mr_id=mr_id,
             target_branch=target_branch,
             source_branch=source_branch,
             title=title,

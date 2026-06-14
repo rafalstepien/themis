@@ -1,7 +1,10 @@
 import json
+import logging
 import os
 import sys
-from typing import Any, Dict
+from typing import Any
+
+import click
 
 from src.review_engine.adapters.outbound import (
     BestPracticesClient,
@@ -10,6 +13,9 @@ from src.review_engine.adapters.outbound import (
     OpenAIClient,
 )
 from src.review_engine.domain.review_orchestrator import ReviewOrchestrator
+from src.review_engine.ports.outbound.gitlab import GitLabPortError
+
+logger = logging.getLogger(__name__)
 
 
 class ReviewEngineCLIAdapter:
@@ -36,7 +42,15 @@ class ReviewEngineCLIAdapter:
             best_practices_port=BestPracticesClient(),
         )
 
-        orchestrator.execute()
+        try:
+            orchestrator.execute()
+        except GitLabPortError:
+            logger.exception("GitLab interaction failed")
+            click.echo(
+                "Error: could not complete the review — GitLab is unavailable or returned unexpected data.",
+                err=True,
+            )
+            sys.exit(1)
 
     @staticmethod
     def _parse_secrets():
@@ -52,15 +66,15 @@ class ReviewEngineCLIAdapter:
         for secret, env_var in secret_to_env_var_mapping.items():
             secret_value = os.getenv(env_var)
             if not secret_value:
-                print(f"CRITICAL: Missing essential {env_var}")
+                click.echo(f"CRITICAL: Missing essential {env_var}")
                 sys.exit(1)
             secrets[secret] = secret_value
         return secrets
 
-    def _load_config(self) -> Dict[str, Any]:
+    def _load_config(self) -> dict[str, Any]:
         try:
             with open("config.json", "r") as f:
                 return json.load(f)
         except FileNotFoundError:
-            print("Warning: config.json not found, falling back to pipeline defaults.")
+            click.echo("Warning: config.json not found, falling back to pipeline defaults.")
             return {}

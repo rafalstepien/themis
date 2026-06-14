@@ -5,7 +5,7 @@ from .dto import MergeRequestDTO
 
 def to_domain(dto: MergeRequestDTO) -> MergeRequest:
     return MergeRequest.create(
-        id=str(dto.iid),
+        mr_id=str(dto.iid),
         target_branch=dto.target_branch,
         source_branch=dto.source_branch,
         title=dto.title,

@@ -11,6 +11,7 @@ from .dto import (
     GitLabFileResponse,
     MergeRequestDTO,
 )
+from .exceptions import handle_gitlab_api_errors, handle_gitlab_data_errors
 from .mappers import to_domain
 
 logger = logging.getLogger(__name__)
@@ -41,19 +42,28 @@ class GitLabClient(GitLabPort):
     def _get_mr_data(self) -> MergeRequestDTO:
         """Fetch all file changes for a merge request from GitLab API."""
         url = f"{self.BASE_API_URL}/projects/{self.project_id}/merge_requests/{self.mr_iid}/changes"
-        response = httpx.get(url, headers=self.headers)
-        response.raise_for_status()
-        return MergeRequestDTO(**response.json())
+
+        with handle_gitlab_api_errors(self.mr_iid):
+            response = httpx.get(url, headers=self.headers)
+            response.raise_for_status()
+
+        with handle_gitlab_data_errors():
+            return MergeRequestDTO(**response.json())
 
     def _get_branch_file_content(self, file_path: str, branch: str) -> str:
         """Fetch raw file content from a specific branch, decoding base64. Returns empty string for missing files."""
         encoded_path = quote(file_path, safe="")
         url = f"{self.BASE_API_URL}/projects/{self.project_id}/repository/files/{encoded_path}"
-        response = httpx.get(url, headers=self.headers, params={"ref": branch})
-        if response.status_code == 404:
-            return ""
-        response.raise_for_status()
-        data = GitLabFileResponse(**response.json())
+
+        with handle_gitlab_api_errors(self.mr_iid):
+            response = httpx.get(url, headers=self.headers, params={"ref": branch})
+            if response.status_code == 404:
+                return ""  # if the file does not exist, assume it's empty
+            response.raise_for_status()
+
+        with handle_gitlab_data_errors():
+            data = GitLabFileResponse(**response.json())
+
         if data.encoding == "base64":
             return base64.b64decode(data.content).decode("utf-8")
         return data.content
@@ -61,8 +71,12 @@ class GitLabClient(GitLabPort):
     def post_comment(self, comment: ReviewComment) -> None:
         """Post a review comment as a general note on the merge request."""
         url = f"{self.BASE_API_URL}/projects/{self.project_id}/merge_requests/{self.mr_iid}/notes"
-        response = httpx.post(url, headers=self.headers, json={"body": self._format_body(comment)})
-        response.raise_for_status()
+
+        with handle_gitlab_api_errors(self.mr_iid):
+            response = httpx.post(
+                url, headers=self.headers, json={"body": self._format_body(comment)}
+            )
+            response.raise_for_status()
 
     @staticmethod
     def _format_body(comment: ReviewComment) -> str:

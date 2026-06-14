@@ -5,9 +5,7 @@ from .llm.openai_client import OpenAIClient
 from .plain_diff_adapter import PlainDiffAdapter
 
 __all__ = [
-    "ASTAdapter",
     "PlainDiffAdapter",
-    "MergeRequestData",
     "GitLabClient",
     "JiraClient",
     "OpenAIClient",

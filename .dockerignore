@@ -1,0 +1,32 @@
+# Version control
+.git/
+.gitignore
+
+# Python bytecode
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# Virtual environment
+.venv/
+
+# Dev tooling caches
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
+# Tests
+tests/
+test_local.sh
+
+# Documentation & ADRs
+docs/
+adr/
+*.md
+
+# Local config & secrets
+.env
+.env.*
+
+# Task runner
+Taskfile.yml

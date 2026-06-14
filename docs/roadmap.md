@@ -10,7 +10,7 @@ Getting high-signal, contextual feedback directly inside a GitLab Merge Request 
 ## Implementation phases
 ### Phase 1: The Core Pipeline (20%, v0.1.0-alpha)
 #### Implementation
-- [ ] Build CLI inside the Docker image that accepts the reference and target branches, fetches diff using GitLab API and prints it
+- [x] Build CLI inside the Docker image that accepts the reference and target branches, fetches diff using GitLab API and prints it
 - [ ] Build the CI/CD Component Wrapper that pulls Docker image with Engine and runs a shell script
 - [ ] Add the LLM integration: Connect the CLI to LLM provider using BYOK model via masked env variables
 - [ ] Parse the LLM output and post it as a comments on the target GitLab MR

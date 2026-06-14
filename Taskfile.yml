@@ -26,3 +26,8 @@ tasks:
     cmds:
       - echo "Run indexer"
     dotenv: ['.env']
+
+  build-image:
+    desc: Build the Docker image locally (tagged as themis:dev)
+    cmds:
+      - docker build -t themis:dev .

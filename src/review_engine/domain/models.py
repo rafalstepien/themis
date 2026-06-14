@@ -5,14 +5,13 @@ from enum import StrEnum
 @dataclass(frozen=True)
 class AnalysisContext:
     """
-    Sourced from rules.json, architecture.json and Jira API
+    Sourced from rules.json, architecture.json, Jira API and repo-maintained best practices.
     """
 
-    past_mr_rules: dict
-    architecture_rules: dict
-    business_context: str
-    best_practices_context: dict
-    code: str
+    past_mr_rules: dict | None = None
+    architecture_rules: dict | None = None
+    business_context: str | None = None
+    best_practices_context: dict | None = None
 
 
 class ChangeType(StrEnum):
@@ -23,6 +22,7 @@ class ChangeType(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class ChangedFile:
+    change_id: int
     new_path: str
     old_path: str
     new_content: str
@@ -32,9 +32,16 @@ class ChangedFile:
 
     @classmethod
     def create(
-        cls, new_path: str, old_path: str, new_content: str, old_content: str, raw_diff: str
+        cls,
+        change_id: int,
+        new_path: str,
+        old_path: str,
+        new_content: str,
+        old_content: str,
+        raw_diff: str,
     ) -> "ChangedFile":
         return cls(
+            change_id=change_id,
             new_path=new_path,
             old_path=old_path,
             new_content=new_content,
@@ -95,3 +102,24 @@ class MergeRequest:  # Aggregate Root
         """
         ...
         return False
+
+
+@dataclass(frozen=True, slots=True)
+class Cohort:
+    name: str
+    description: str
+    change_ids: list[int]
+
+
+@dataclass(frozen=True, slots=True)
+class ReviewComment:
+    content: str
+    links: list[str]
+    # TODO Phase 2 (Milestone 2): add file path + line anchor from Tree-sitter offsets
+
+
+@dataclass(frozen=True, slots=True)
+class CodeReview:
+    cohorts: list[Cohort]
+    business_requirements_matrix: list  # TODO Phase 2: model as list[BusinessRequirement]
+    comments: list[ReviewComment]

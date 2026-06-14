@@ -1,3 +1,4 @@
+from review_engine.domain.models import AnalysisContext
 from src.review_engine.ports.outbound import (
     BestPracticesPort,
     BusinessContextPort,
@@ -25,10 +26,9 @@ class ReviewOrchestrator:
         if not mr.should_be_reviewed():
             return
 
-        print(mr)
-
+        ######################### GATHER ADDITIONAL CONTEXT #########################
+        analysis_context = AnalysisContext(None, None, None, None)
         # analysis_context = AnalysisContext(
-        #     code=self.code_representation_port.get_code(),
         #     architecture_rules=self.gitlab_port.get_file_content(mr.module, "architecture.json"),
         #     past_mr_rules=self.gitlab_port.get_file_content(mr.module, "rules.json"),
         #     business_context=self.business_context_port.get_business_context(mr.ticket_id),
@@ -37,11 +37,13 @@ class ReviewOrchestrator:
         #     ),
         # )
 
+        ######################### SEND TO LLM #########################
         # # 1) cohort aggregation, 2) business requirements matrix, 3) code review comments
-        # review_data = self.llm_port.generate_code_review(analysis_context)
+        self.llm_port.generate_code_review(mr, analysis_context)
 
+        ######################### POST COMMENTS TO GITLAB #########################
+        # review_data = self.llm_port.generate_code_review(mr, analysis_context)
         # self.gitlab_port.post_comment(review_data.cohorts)
         # self.gitlab_port.post_comment(review_data.business_requirements_matrix)
-
-        # for comment in review_data.code_review_comments:
+        # for comment in review_data.comments:
         #     self.gitlab_port.post_comment(comment)

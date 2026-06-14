@@ -7,11 +7,11 @@ import httpx
 from src.review_engine.domain.models import MergeRequest
 from src.review_engine.ports.outbound import GitLabPort
 
-from .mappers import to_domain
-from .models import (
+from .dto import (
     GitLabFileResponse,
     MergeRequestDTO,
 )
+from .mappers import to_domain
 
 logger = logging.getLogger(__name__)
 

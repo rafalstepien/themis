@@ -1,4 +1,3 @@
-
 from enum import StrEnum
 
 import click
@@ -12,12 +11,15 @@ class RunMode(StrEnum):
 
 
 @click.command()
-@click.option('--mode', default="engine", help='The mode in which the script is run (engine | indexer)')
+@click.option(
+    "--mode", default="engine", help="The mode in which the script is run (engine | indexer)"
+)
 def main(mode: str):
     if mode == RunMode.ENGINE:
         ReviewEngineCLIAdapter().run()
     elif mode == RunMode.INDEXER:
         raise NotImplementedError
+
 
 if __name__ == "__main__":
     main()

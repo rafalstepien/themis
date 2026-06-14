@@ -9,6 +9,10 @@ Both of the elements will live in the same repository, compiled into a single Do
 `ai-review-tool --mode=engine` or `ai-review-tool --mode=indexer`
 
 
+## Architecture Conventions
+
+**Port boundary rule:** All outbound ports return domain objects — never adapter DTOs. DTOs (pydantic) are internal to each adapter and mapped to domain value objects before crossing the port boundary. See `adr/0002-port-boundary-domain-objects.md`.
+
 ## The AI Code Review Engine
 The code will be open-sourced and hosted on GitHub.
 The code will be versioned, built as Docker image and pushed to public repository on DockerHub.

@@ -7,7 +7,7 @@ tasks:
   run-test:
     desc: Runs test script that fetches the actual data from GitLab API
     cmds:
-      - ./test_local.sh
+      - ./scripts/test_local.sh
 
   run-linters:
     desc: Run linters and type checker

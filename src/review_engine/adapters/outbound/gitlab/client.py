@@ -4,7 +4,7 @@ from urllib.parse import quote
 
 import httpx
 
-from src.review_engine.domain.models import MergeRequest
+from src.review_engine.domain.models import MergeRequest, ReviewComment
 from src.review_engine.ports.outbound import GitLabPort
 
 from .dto import (
@@ -58,7 +58,18 @@ class GitLabClient(GitLabPort):
             return base64.b64decode(data.content).decode("utf-8")
         return data.content
 
-    def post_comment(self) -> None: ...
+    def post_comment(self, comment: ReviewComment) -> None:
+        """Post a review comment as a general note on the merge request."""
+        url = f"{self.BASE_API_URL}/projects/{self.project_id}/merge_requests/{self.mr_iid}/notes"
+        response = httpx.post(url, headers=self.headers, json={"body": self._format_body(comment)})
+        response.raise_for_status()
+
+    @staticmethod
+    def _format_body(comment: ReviewComment) -> str:
+        if not comment.links:
+            return comment.content
+        references = "\n".join(f"- {link}" for link in comment.links)
+        return f"{comment.content}\n\n**References:**\n{references}"
 
     def get_file_content(self) -> str:
         return ""

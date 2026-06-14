@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from src.review_engine.domain.models import MergeRequest
+from src.review_engine.domain.models import MergeRequest, ReviewComment
 
 
 class GitLabPort(ABC):
@@ -10,7 +10,7 @@ class GitLabPort(ABC):
         ...
 
     @abstractmethod
-    def post_comment(self): ...
+    def post_comment(self, comment: ReviewComment) -> None: ...
 
     @abstractmethod
     def get_file_content(self) -> str: ...

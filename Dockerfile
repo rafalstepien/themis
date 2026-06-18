@@ -29,5 +29,4 @@ ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-ENTRYPOINT ["python", "main.py"]
-CMD ["--mode=engine"]
+CMD ["python", "main.py", "--mode=engine"]

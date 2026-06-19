@@ -1,3 +1,4 @@
+from src.bootstrap.config import Config
 from src.review_engine.domain.models import AnalysisContext
 from src.review_engine.ports.outbound import (
     BestPracticesPort,
@@ -10,6 +11,7 @@ from src.review_engine.ports.outbound import (
 class ReviewOrchestrator:
     def __init__(
         self,
+        review_config: Config,
         gitlab_port: GitLabPort,
         llm_port: LLMPort,
         business_context_port: BusinessContextPort,
@@ -19,11 +21,12 @@ class ReviewOrchestrator:
         self.llm_port = llm_port
         self.business_context_port = business_context_port
         self.best_practices_port = best_practices_port
+        self.review_config = review_config
 
     def execute(self):
         mr = self.gitlab_port.get_mr_data()
 
-        if not mr.should_be_reviewed():
+        if not mr.should_be_reviewed(self.review_config):
             return
 
         analysis_context = AnalysisContext(None, None, None, None)

@@ -4,7 +4,8 @@
 set -e
 
 SCRIPT_DIR=$(pwd)
-ENV_FILE="$SCRIPT_DIR/.env.test"
+REPO_ROOT="~/repos/sandbox/themis-repos/themis"
+ENV_FILE="$REPO_ROOT/env_files/.env.test"
 
 if [[ ! -f "$ENV_FILE" ]]; then
     echo "❌ Error: .env.test not found"

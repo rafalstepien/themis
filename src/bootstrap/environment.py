@@ -48,8 +48,6 @@ class Secrets(EnvSettings):
     jira_token: str | None = Field(default=None, alias="JIRA_API_TOKEN")
 
 
-
-
 class CIContext(EnvSettings):
     """Non-secret CI runtime context injected by the GitLab runner.
 

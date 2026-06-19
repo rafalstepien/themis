@@ -1,7 +1,7 @@
 from pathlib import Path
 
-import pytest
 from pydantic import ValidationError
+import pytest
 
 from src.bootstrap.config import Config, LLMProvider
 

@@ -6,6 +6,14 @@ import click
 from src.bootstrap.config import Config
 from src.bootstrap.environment import CIContext, Secrets
 from src.bootstrap.exceptions import MissingEnvironmentError
+from src.review_engine.adapters.outbound import (
+    BestPracticesClient,
+    GitLabClient,
+    JiraClient,
+    LLMClientResolver,
+)
+from src.review_engine.domain.review_orchestrator import ReviewOrchestrator
+from src.review_engine.ports.outbound import GitLabPortError, LLMPortError
 
 logger = logging.getLogger(__name__)
 
@@ -26,30 +34,39 @@ class ReviewEngineCLIAdapter:
 
         config = Config.from_yaml()
 
-        print(config)
+        gitlab_client = GitLabClient(
+            token=secrets.gitlab_token,
+            project_id=ci_context.project_id,
+            mr_iid=ci_context.mr_iid,
+        )
 
-        # gitlab_client = GitLabClient(
-        #     token=secrets.gitlab_token,
-        #     project_id=ci_context.project_id,
-        #     mr_iid=ci_context.mr_iid,
-        # )
+        llm_client = LLMClientResolver.resolve(
+            llm_config=config.llm,
+            token=secrets.llm_token,
+            test_mode=config.test_mode,
+        )
 
-        # openai_client = OpenAIClient(token=secrets.llm_token)
+        orchestrator = ReviewOrchestrator(
+            review_config=config.review,
+            gitlab_port=gitlab_client,
+            llm_port=llm_client,
+            business_context_port=JiraClient(token=secrets.jira_token),
+            best_practices_port=BestPracticesClient(),
+        )
 
-        # orchestrator = ReviewOrchestrator(
-        #     gitlab_port=gitlab_client,
-        #     llm_port=openai_client,
-        #     business_context_port=JiraClient(token=secrets.jira_token),
-        #     best_practices_port=BestPracticesClient(),
-        # )
-
-        # try:
-        #     orchestrator.execute()
-        # except GitLabPortError:
-        #     logger.exception("GitLab interaction failed")
-        #     click.echo(
-        #         "Error: could not complete the review — GitLab is unavailable or returned unexpected data.",
-        #         err=True,
-        #     )
-        #     sys.exit(1)
-
+        try:
+            orchestrator.execute()
+        except GitLabPortError:
+            logger.exception("GitLab interaction failed")
+            click.echo(
+                "Error: could not complete the review — GitLab is unavailable or returned unexpected data.",
+                err=True,
+            )
+            sys.exit(1)
+        except LLMPortError:
+            logger.exception("LLM interaction failed")
+            click.echo(
+                "Error: could not complete the review — the LLM provider is unavailable or returned unexpected data.",
+                err=True,
+            )
+            sys.exit(1)

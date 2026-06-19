@@ -54,7 +54,22 @@ Most AI code review tools either route your source code through a third-party Sa
 
 ## Quick Start
 
-**Step 1 — Add Themis to your Merge Request pipeline:**
+**Step 1 — Create a dedicated bot account for Themis:**
+
+Themis posts review comments on behalf of a GitLab user. You must create a dedicated service account for this — do not use a personal account, as its token would grant Themis access far beyond what it needs.
+
+1. **Create a new GitLab account** for the bot (e.g. `themis-reviewer` or `your-org-code-reviewer`). Use a shared team mailbox (e.g. `themis-reviewer@your-company.com`) so no single person owns it.
+2. **Add the bot account to each repository** that Themis will review:
+   - Go to your project → **Manage → Members → Invite members**.
+   - Search for the bot account and set its role to **Developer** (Themis needs permission to read diffs and post comments; Reporter is not enough).
+   - Click **Invite**.
+3. **Generate a GitLab personal access token** for the bot account:
+   - Sign in as the bot account.
+   - Go to **User settings → Access tokens → Add new token**.
+   - Give it a descriptive name (e.g. `themis-ci`), set an expiry date appropriate for your rotation policy, and grant the **`api`** scope.
+   - Copy the token — you will use it as `GITLAB_API_TOKEN` in the next step.
+
+**Step 2 — Add Themis to your Merge Request pipeline:**
 
 ```yaml
 # .gitlab-ci.yml
@@ -65,14 +80,18 @@ stages:
   - review
 ```
 
-**Step 2 — Set two masked variables in your GitLab project settings:**
+**Step 3 — Set two masked variables in your GitLab project settings:**
+
+Go to your project → **Settings → CI/CD → Variables** and add:
 
 | Variable | Description |
 |---|---|
 | `LLM_API_TOKEN` | API key for your LLM provider |
-| `GITLAB_API_TOKEN` | GitLab token with `api` scope |
+| `GITLAB_API_TOKEN` | Personal access token of the Themis bot account (from Step 1) |
 
-**Step 3 — Open a Merge Request.** Themis runs automatically and posts inline review comments.
+Mark both variables as **Masked** to prevent them from appearing in job logs.
+
+**Step 4 — Open a Merge Request.** Themis runs automatically and posts inline review comments under the bot account.
 
 > Optional: set `JIRA_API_TOKEN` to enable automatic ticket requirements verification inside the MR.
 

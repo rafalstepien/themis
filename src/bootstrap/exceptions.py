@@ -7,6 +7,4 @@ class MissingEnvironmentError(Exception):
 
     def __init__(self, variables: list[str]) -> None:
         self.variables = variables
-        super().__init__(
-            f"Missing essential environment variables: {', '.join(variables)}"
-        )
+        super().__init__(f"Missing essential environment variables: {', '.join(variables)}")

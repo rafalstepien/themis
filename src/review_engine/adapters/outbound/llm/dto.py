@@ -12,7 +12,13 @@ class CommentDTO(BaseModel):
     links: list[str]
 
 
+class BusinessRequirementDTO(BaseModel):
+    requirement: str
+    status: str  # e.g. "met", "partially_met", "not_met"
+    evidence: str
+
+
 class CodeReviewResponseDTO(BaseModel):
     cohorts: list[CohortDTO]
-    business_requirements_matrix: list
+    business_requirements_matrix: list[BusinessRequirementDTO]
     code_review_comments: list[CommentDTO]

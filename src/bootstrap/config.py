@@ -24,6 +24,7 @@ class LLMConfig(BaseModel):
 
 class Config(BaseModel):
     version: int
+    test_mode: bool = Field(default=False)
     review: ReviewConfig = Field(default_factory=ReviewConfig)
     llm: LLMConfig
 

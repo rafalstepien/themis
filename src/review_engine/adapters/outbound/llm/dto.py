@@ -1,10 +1,16 @@
 from pydantic import BaseModel
 
 
+
+class CohortChangeDTO(BaseModel):
+    id: int
+    overview: str
+
+
 class CohortDTO(BaseModel):
     name: str
     description: str
-    change_ids: list[int]
+    changes: list[CohortChangeDTO]
 
 
 class CommentDTO(BaseModel):

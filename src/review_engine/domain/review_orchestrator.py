@@ -21,11 +21,12 @@ class ReviewOrchestrator:
         self.llm_port = llm_port
         self.business_context_port = business_context_port
         self.best_practices_port = best_practices_port
+        self.review_config = config.review
 
     def execute(self):
         mr = self.gitlab_port.get_mr_data()
 
-        if not mr.should_be_reviewed():
+        if not mr.should_be_reviewed(self.review_config):
             return
 
         analysis_context = AnalysisContext(None, None, None, None)

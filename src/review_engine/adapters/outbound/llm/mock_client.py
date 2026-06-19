@@ -6,11 +6,10 @@ from .mappers import to_domain
 
 
 class MockLLMClient(LLMPort):
-    """Stand-in LLM used when ``config.test_mode`` is enabled.
-
-    Returns a hardcoded review so the full pipeline (diff fetch -> review ->
-    posting comments) can be exercised without spending tokens or needing a
-    real provider key.
+    """
+    
+    Used when ``config.test_mode`` is enabled to not burn tokens in testing phase.
+    Responds with dummy code review comment.
     """
 
     def generate_code_review(self, mr: MergeRequest, context: AnalysisContext) -> CodeReview:

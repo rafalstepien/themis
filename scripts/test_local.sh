@@ -4,7 +4,7 @@
 set -e
 
 SCRIPT_DIR=$(pwd)
-REPO_ROOT="/Users/rafal.stepien@booksy.com/repos/sandbox/themis-repos/themis"
+REPO_ROOT="~/repos/sandbox/themis-repos/themis"
 ENV_FILE="$REPO_ROOT/env_files/.env.test"
 
 if [[ ! -f "$ENV_FILE" ]]; then

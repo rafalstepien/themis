@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import StrEnum
+from src.bootstrap.config import ReviewConfig
 
 
 @dataclass(frozen=True)
@@ -84,24 +85,20 @@ class MergeRequest:  # Aggregate Root
             files=files,
         )
 
-    def should_be_reviewed(self) -> bool:
+    def should_be_reviewed(self, config: ReviewConfig) -> bool:
         """
         Business Rule (Invariant): We should not run an AI review if
         MR is empty or excessively massive.
         """
         if len(self.files) == 0:
             return False
-        if len(self.files) > 100:  # Protect API token limits
+        if len(self.files) > config.max_changed_files:
             return False
+        # TODO: add rule
+        #  for each file in the merge request
+        #      if number of changes exceeds max number of changes
+        #          return False
         return True
-
-    def _file_too_big(self, content: str) -> bool:
-        """
-        Business Rule (Invariant): We should not run an AI review on
-        the files that are very large (eg. lock files)
-        """
-        ...
-        return False
 
 
 @dataclass(frozen=True, slots=True)

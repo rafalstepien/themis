@@ -221,3 +221,4 @@ __marimo__/
 .streamlit/secrets.toml
 
 CLAUDE.md
+scripts/test_local.sh

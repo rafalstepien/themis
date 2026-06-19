@@ -1,8 +1,6 @@
 class MissingEnvironmentError(Exception):
-    """Raised when mandatory environment variables are absent.
-
-    Carries the offending variable names (never their values) so callers can
-    report them without leaking secrets.
+    """
+    Raised when mandatory environment variables are absent.
     """
 
     def __init__(self, variables: list[str]) -> None:

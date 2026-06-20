@@ -8,6 +8,11 @@ tasks:
     desc: Runs test script that fetches the actual data from GitLab API
     cmds:
       - ./scripts/test_local.sh
+  
+  run-unit-tests:
+    desc: Run test suite
+    cmds:
+      - uv run python3 -m pytest -vvs tests/unit
 
   run-linters:
     desc: Run linters and type checker

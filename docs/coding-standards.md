@@ -7,6 +7,9 @@
 
 ## Testing
 - Use Given-When-Then pattern
+- Domain → test with fakes/mocks substituted for ports, never by reaching inside. The domain's whole point is that it depends only on port interfaces, so it's trivially testable with test doubles passed via the constructor
+- Adapters → test against the external edge, mocking the I/O boundary (httpx), not the domain.
+- Pure functions (mappers) → no mocks at all. Construct a DTO, call to_domain, assert on the domain object.
 
 ## Architecture
 - Raise Low, Catch High: Deep low-level components (such as a database query executor or a HTTP network fetcher) must not handle execution errors by fallback defaults or printing messages. They must raise descriptive, domain-specific exceptions up the execution stack. Catching and logging exceptions should be deferred to the edges of the application layer (such as API routers, background workers, or CLI interfaces)

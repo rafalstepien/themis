@@ -15,6 +15,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "factory-boy>=3.3.3",
     "pytest>=9.0.3",
     "ruff>=0.15.16",
     "ty>=0.0.49",

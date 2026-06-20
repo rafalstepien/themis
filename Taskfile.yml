@@ -15,10 +15,15 @@ tasks:
       - uv run python3 -m pytest -vvs tests/unit
 
   run-linters:
-    desc: Run linters and type checker
+    desc: Run linters and type checker locally (auto-fixes and reformats in place)
     cmds:
       - uv run ruff check --fix && uv run ruff format && uv run ty check
     dotenv: ['.env.test']
+
+  check-linters:
+    desc: Check linting, formatting and types without modifying files (CI gate)
+    cmds:
+      - uv run ruff check && uv run ruff format --check && uv run ty check
 
   run-engine:
     desc: Run AI Code Review Engine

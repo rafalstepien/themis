@@ -11,6 +11,7 @@ from .mappers import to_domain
 from .prompt import build_system_prompt, build_user_prompt
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class OpenAIClient(LLMPort):
@@ -36,9 +37,13 @@ class OpenAIClient(LLMPort):
             )
 
         with handle_llm_data_errors():
-            dto = response.output_parsed
+            dto: CodeReviewResponseDTO | None = response.output_parsed
 
         if dto is None:
             raise LLMResponseError("LLM returned no parsable structured output (possible refusal).")
+
+        logger.info(
+            f"LLM responded with {len(dto.code_review_comments)} comments and identified {len(dto.cohorts)} cohorts"
+        )
 
         return dto

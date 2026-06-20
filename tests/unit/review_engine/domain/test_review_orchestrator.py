@@ -18,6 +18,7 @@ def test_execute__not_reviewable_mr():
         llm_port=llm_port_mock,
         business_context_port=Mock(),
         best_practices_port=Mock(),
+        module_context_port=Mock(),
     )
 
     o.execute()
@@ -41,6 +42,7 @@ def test_execute__happy_path():
         llm_port=llm_port_mock,
         business_context_port=Mock(),
         best_practices_port=Mock(),
+        module_context_port=Mock(),
     )
 
     o.execute()
@@ -62,6 +64,7 @@ def test_execute__review_with_no_comments():
         llm_port=llm_port_mock,
         business_context_port=Mock(),
         best_practices_port=Mock(),
+        module_context_port=Mock(),
     )
 
     o.execute()

@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Self
 
 from pydantic import Field, ValidationError
@@ -53,7 +54,13 @@ class CIContext(EnvSettings):
 
     These identify the merge request under review. They are mandatory: the
     review cannot run without knowing which project and MR it targets.
+
+    ``project_dir`` is the root of the checked-out repo under review and the
+    anchor for every consumer-repo read (``.themis-ai/`` config, rules,
+    architecture). GitLab sets ``CI_PROJECT_DIR`` to the clone path; locally it
+    defaults to the current working directory so the same code path is exercised.
     """
 
     project_id: str = Field(alias="CI_PROJECT_ID")
     mr_iid: int = Field(alias="CI_MERGE_REQUEST_IID")
+    project_dir: Path = Field(default=Path("."), alias="CI_PROJECT_DIR")

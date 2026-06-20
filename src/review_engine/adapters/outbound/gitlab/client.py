@@ -70,12 +70,16 @@ class GitLabClient(GitLabPort):
 
     def post_comment(self, comment: ReviewComment) -> None:
         """Post a review comment as a general note on the merge request."""
+        body = self._format_body(comment)
+        if not body.strip():
+            # GitLab rejects a blank note body with HTTP 400
+            logger.warning("Skipping empty review comment for MR %s", self.mr_iid)
+            return
+
         url = f"{self.BASE_API_URL}/projects/{self.project_id}/merge_requests/{self.mr_iid}/notes"
 
         with handle_gitlab_api_errors(self.mr_iid):
-            response = httpx.post(
-                url, headers=self.headers, json={"body": self._format_body(comment)}
-            )
+            response = httpx.post(url, headers=self.headers, json={"body": body})
             response.raise_for_status()
 
     @staticmethod

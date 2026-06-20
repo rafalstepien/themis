@@ -16,6 +16,24 @@ class AnalysisContext:
     best_practices_context: dict | None = None
 
 
+_SENTINEL_PATHS = {"", "/dev/null"}
+
+
+def _longest_module_match(path: str, modules: list[str]) -> str | None:
+    """Return the most specific declared module that contains ``path``.
+
+    A path belongs to a module when it equals the module path or sits beneath
+    it. When declarations overlap (e.g. ``services`` and ``services/payments``)
+    the longest match wins, so a file is attributed to the most specific module.
+    Sentinel paths (empty or ``/dev/null``, used by GitLab for the missing side
+    of an addition or deletion) match nothing.
+    """
+    if path in _SENTINEL_PATHS:
+        return None
+    matches = [m for m in modules if path == m or path.startswith(m + "/")]
+    return max(matches, key=len) if matches else None
+
+
 class ChangeType(StrEnum):
     ADDITION = "addition"
     DELETION = "deletion"
@@ -100,6 +118,23 @@ class MergeRequest:  # Aggregate Root
         #      if number of changes exceeds max number of changes
         #          return False
         return True
+
+    def affected_modules(self, config: ReviewConfig) -> list[str]:
+        """Modules touched by this MR, restricted to those declared in config.
+
+        Both ``new_path`` and ``old_path`` are considered so deletions (whose
+        new side is a sentinel) resolve via the old path and cross-module moves
+        are attributed to both source and destination modules. The result is
+        deduplicated and returned in config-declaration order, making it
+        deterministic regardless of file ordering.
+        """
+        matched = set()
+        for file in self.files:
+            for path in (file.new_path, file.old_path):
+                module = _longest_module_match(path, config.modules)
+                if module is not None:
+                    matched.add(module)
+        return [module for module in config.modules if module in matched]
 
 
 @dataclass(frozen=True, slots=True)

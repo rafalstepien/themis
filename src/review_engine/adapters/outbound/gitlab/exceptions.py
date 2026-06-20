@@ -35,9 +35,12 @@ def handle_gitlab_api_errors(mr_id: int):
         yield
     except httpx.HTTPStatusError as e:
         status_code = e.response.status_code
-        raise GitLabAPIError(
-            f"GitLab returned HTTP {status_code} for MR {mr_id}", status_code=status_code
-        ) from e
+        # GitLab puts the reason (e.g. "body is missing") in the response body;
+        detail = e.response.text.strip()[:500]
+        message = f"GitLab returned HTTP {status_code} for MR {mr_id}"
+        if detail:
+            message = f"{message}: {detail}"
+        raise GitLabAPIError(message, status_code=status_code) from e
     except httpx.RequestError as e:
         raise GitLabAPIError("Could not reach GitLab") from e
 

@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
 
-from src.review_engine.domain.models import ChangedFile
-
 
 class BestPracticesPort(ABC):
     @abstractmethod
-    def get_best_practices(self, changed_files: list[ChangedFile]) -> dict: ...
+    def load_best_practices(self, applicable_technologies: list[str]) -> dict:
+        """
+        applicable_technologies would be something like
+        ["fastapi", "concurency"] that will map to best_practices/fastapi, best_practices/concurency
+        """
+        return {}

@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from pydantic import ValidationError
@@ -11,6 +12,10 @@ version: 1
 review:
   max_file_chars: 12345
   max_changed_files: 9
+  modules:
+    - services/payments
+    - services/booking
+    - webapps/boost
 
 llm:
   provider: anthropic
@@ -38,6 +43,11 @@ def test_loads_full_config(tmp_path: Path) -> None:
     assert config.version == 1
     assert config.review.max_file_chars == 12345
     assert config.review.max_changed_files == 9
+    assert config.review.modules == [
+        "services/payments",
+        "services/booking",
+        "webapps/boost",
+    ]
     assert config.llm.provider is LLMProvider.ANTHROPIC
     assert config.llm.model == "claude-opus-4-8"
 
@@ -47,6 +57,26 @@ def test_review_section_defaults_when_omitted(tmp_path: Path) -> None:
 
     assert config.review.max_file_chars == 60_000
     assert config.review.max_changed_files == 50
+    assert config.review.modules == []
+
+
+def test_warns_when_no_modules_declared(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    with caplog.at_level(logging.WARNING):
+        Config.from_yaml(_write_config(tmp_path, _CONFIG_WITHOUT_REVIEW))
+
+    assert any(
+        "No modules declared" in record.message and record.levelno == logging.WARNING
+        for record in caplog.records
+    )
+
+
+def test_does_not_warn_when_modules_declared(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    with caplog.at_level(logging.WARNING):
+        Config.from_yaml(_write_config(tmp_path, _FULL_CONFIG))
+
+    assert caplog.records == []
 
 
 def test_unknown_provider_is_rejected(tmp_path: Path) -> None:

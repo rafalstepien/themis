@@ -3,7 +3,7 @@ import sys
 
 import click
 
-from src.bootstrap.config import Config
+from src.bootstrap.config import DEFAULT_CONFIG_PATH, Config
 from src.bootstrap.environment import CIContext, Secrets
 from src.bootstrap.exceptions import MissingEnvironmentError
 from src.review_engine.adapters.outbound import (
@@ -11,6 +11,7 @@ from src.review_engine.adapters.outbound import (
     GitLabClient,
     JiraClient,
     LLMClientResolver,
+    LocalFileContextAdapter,
 )
 from src.review_engine.domain.review_orchestrator import ReviewOrchestrator
 from src.review_engine.ports.outbound import GitLabPortError, LLMPortError
@@ -32,7 +33,7 @@ class ReviewEngineCLIAdapter:
             click.echo(f"CRITICAL: {exc}", err=True)
             sys.exit(1)
 
-        config = Config.from_yaml()
+        config = Config.from_yaml(ci_context.project_dir / DEFAULT_CONFIG_PATH)
 
         gitlab_client = GitLabClient(
             token=secrets.gitlab_token,
@@ -52,6 +53,7 @@ class ReviewEngineCLIAdapter:
             llm_port=llm_client,
             business_context_port=JiraClient(token=secrets.jira_token),
             best_practices_port=BestPracticesClient(),
+            module_context_port=LocalFileContextAdapter(),
         )
 
         try:

@@ -8,9 +8,10 @@
 3. Create MR to `main`
 TODO: Needs automation. Implement CI pipeline here: build image -> run linters -> run tests
 4. Collect approvals and merge
-5. Call `./scripts/push_image.sh` with target version (not prefixed with v, eg. `0.1.0-dev` is correct while `v0.1.0-dev` is not correct).
+5. Tag the `main` branch version
+6. Call `./scripts/push_image.sh` with target version (not prefixed with v, eg. `0.1.0-dev` is correct while `v0.1.0-dev` is not correct).
 TODO: Needs automation. Release should not be manual and this script should be triggered as a part of tag pipeline
-6. Verify if the image was pushed to Dockerhub
+7. Verify if the image was pushed to Dockerhub
 
 
 ### 2. Repository `themis-ci`
@@ -21,7 +22,10 @@ TODO: Needs automation. Release should not be manual and this script should be t
 
 > Remember: Component tag version must always match image version
 
+### 3. Before client repo
+Run `scripts/test_local.sh` to verify pipeline on test MR
 
-### 3. Repository `themis-example` (or client repo)
+### 4. Repository `themis-example` (or client repo)
 1. Update version of the included component in `.gitlab-ci.yml` (eg. to `component: gitlab.com/rafalstepien/themis-ci/themis-ci@0.1.0-dev`)
 2. Test if the review is done correctly????
+

@@ -85,8 +85,6 @@ Good output:
 - Cohort description that just restates the file list without explaining the relationship.
 - Reading order that puts the API router before the DTO that caused the change.
 
-
-
 ## code_review_comments — detailed rules
 
 Each comment must:

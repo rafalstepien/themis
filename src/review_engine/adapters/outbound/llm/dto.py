@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 
 
-
 class CohortChangeDTO(BaseModel):
     id: int
     overview: str

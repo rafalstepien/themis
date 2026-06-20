@@ -1,4 +1,4 @@
-from src.bootstrap.config import Config
+from src.bootstrap.config import ReviewConfig
 from src.review_engine.domain.models import AnalysisContext
 from src.review_engine.ports.outbound import (
     BestPracticesPort,
@@ -11,7 +11,7 @@ from src.review_engine.ports.outbound import (
 class ReviewOrchestrator:
     def __init__(
         self,
-        review_config: Config,
+        review_config: ReviewConfig,
         gitlab_port: GitLabPort,
         llm_port: LLMPort,
         business_context_port: BusinessContextPort,

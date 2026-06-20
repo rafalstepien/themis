@@ -7,7 +7,7 @@ from .mappers import to_domain
 
 class MockLLMClient(LLMPort):
     """
-    
+
     Used when ``config.test_mode`` is enabled to not burn tokens in testing phase.
     Responds with dummy code review comment.
     """

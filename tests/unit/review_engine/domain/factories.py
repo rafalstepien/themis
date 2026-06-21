@@ -47,7 +47,7 @@ class ReviewCommentFactory(factory.Factory[ReviewComment]):
         model = ReviewComment
 
     content = "content"
-    links = factory.LazyFunction(lambda: ["https://..."])
+    references = factory.LazyFunction(lambda: [])
 
 
 class CodeReviewFactory(factory.Factory[CodeReview]):

@@ -8,6 +8,8 @@ ticket context is supplied (i.e. a Jira token was provided); otherwise the
 model is told to leave it empty.
 """
 
+import json
+
 from src.review_engine.domain.models import AnalysisContext, MergeRequest
 
 _SYSTEM_PROMPT_BASE = """\
@@ -87,27 +89,51 @@ Good output:
 
 ## code_review_comments — detailed rules
 
-Each comment must:
-- Identify the specific file and line range (if known)
-- Describe the problem concisely
-- Explain the risk or consequence
-- Suggest a concrete fix or point to relevant documentation
+Each comment must, in its `content`:
+- Name the specific file and describe the problem concisely
+- Explain the risk or consequence and suggest a concrete fix
+- Cite its grounding in `references` when the problem violates a rule or \
+architecture contract you were given (see "references" below)
+
+**One comment per problem.** Each distinct problem gets exactly ONE comment. Do \
+NOT file several comments describing the same underlying issue from different \
+angles — consolidate them into a single comment that names the root cause. Two \
+comments are duplicates when fixing one would resolve the other (e.g. "imports \
+catalog directly", "instantiates a concrete repository", and "bypasses the \
+gateway" are usually one architectural violation, not three).
 
 Only raise a comment when it adds real value. When in doubt, stay silent.
 Use an empty list when there are none.
 
-**Good comment example:**
+### references — how to cite
+
+`references` grounds a comment in this repo's own documented context. NEVER \
+invent URLs or links, and only cite context that was actually provided to you \
+in this prompt. Each reference is exactly one of:
+
+- A violated learned rule (from the "Rules learned from past merge requests" section):
+  { "kind": "rule", "module": "<the rule's module>", "rule": "<the rule text, copied VERBATIM>" }
+- A violated architecture contract (from the "Architecture rules" section):
+  { "kind": "architecture", "module": "<the module>" }   (no "rule" field — cite the whole file, not a section)
+
+Copy `module` and `rule` exactly as shown in those sections. If a comment is not \
+grounded in any provided rule or architecture contract (e.g. a plain logic bug), \
+return an empty `references` list for that comment.
+
+**Good comment example (architecture violation):**
 {
-  "file": "src/services/pricing_service.py",
-  "lines": "42-45",
-  "severity": "bug",
-  "comment": "`total -= discount_amount` does not guard against `discount_amount > total`, which can produce a negative order total. Add `discount_amount = min(discount_amount, total)` before subtraction.",
+  "content": "`orders/domain/services.py` imports and instantiates `CatalogService` directly, creating a hard dependency from the orders domain into catalog and bypassing the outbound ports and anti-corruption layer. Reserve stock through an injected port realized by a catalog gateway adapter instead.",
+  "references": [ { "kind": "architecture", "module": "orders" } ]
+}
+
+**Good comment example (rule violation):**
+{
+  "content": "`price` is held as a float here; currency arithmetic on floats accumulates rounding errors in totals and tax. Use the shared Money value object (integer minor units).",
+  "references": [ { "kind": "rule", "module": "catalog", "rule": "Represent money as integer minor units, never as float." } ]
 }
 
 **Bad comment example (do NOT produce):**
-{
-  "comment": "Consider renaming `amt` to `amount` for clarity."  ← linter/style nit, out of scope
-}
+{ "content": "Consider renaming `amt` to `amount` for clarity." }   ← linter/style nit, out of scope
 """
 
 _MATRIX_INSTRUCTION_ENABLED = """\
@@ -139,12 +165,12 @@ def build_user_prompt(mr: MergeRequest, context: AnalysisContext) -> str:
     ]
 
     if context.architecture_rules:
-        sections += ["", "# Architecture rules", _format_mapping(context.architecture_rules)]
+        sections += ["", "# Architecture rules", _format_architecture(context.architecture_rules)]
     if context.past_mr_rules:
         sections += [
             "",
             "# Rules learned from past merge requests",
-            _format_mapping(context.past_mr_rules),
+            _format_rules(context.past_mr_rules),
         ]
     if context.best_practices_context:
         sections += ["", "# Best practices", _format_mapping(context.best_practices_context)]
@@ -158,6 +184,34 @@ def _format_files(mr: MergeRequest) -> str:
     blocks: list[str] = []
     for f in mr.files:
         blocks.append(f"## [change_id={f.change_id}] {f.new_path}\n```diff\n{f.raw_diff}\n```")
+    return "\n\n".join(blocks)
+
+
+def _format_architecture(architecture: dict) -> str:
+    """Render each module's architecture contract under a citable module header."""
+    blocks: list[str] = []
+    for module, payload in architecture.items():
+        blocks.append(f"## Module: {module}\n```json\n{json.dumps(payload, indent=2)}\n```")
+    return "\n\n".join(blocks)
+
+
+def _format_rules(rules: dict) -> str:
+    """Render each module's learned rules verbatim so the model can cite them exactly."""
+    blocks: list[str] = []
+    for module, payload in rules.items():
+        lines = [f"## Module: {module}"]
+        rule_items = payload.get("rules") if isinstance(payload, dict) else None
+        if rule_items:
+            for item in rule_items:
+                rule = item.get("rule", "")
+                severity = item.get("severity")
+                header = f'- "{rule}" ({severity})' if severity else f'- "{rule}"'
+                lines.append(header)
+                if item.get("reason"):
+                    lines.append(f"  Why: {item['reason']}")
+        else:
+            lines.append(f"```json\n{json.dumps(payload, indent=2)}\n```")
+        blocks.append("\n".join(lines))
     return "\n\n".join(blocks)
 
 

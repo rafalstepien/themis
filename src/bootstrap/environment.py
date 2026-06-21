@@ -40,8 +40,8 @@ class EnvSettings(BaseSettings):
 class Secrets(EnvSettings):
     """Sensitive tokens sourced from the process environment.
 
-    Mandatory tokens (GitLab, LLM) have no default, so :meth:`load` fails if
-    they are absent. Optional tokens (Jira) default to ``None`` when unset.
+    Mandatory tokens (GitLab, LLM) have no default, so :meth`load` fails if
+    they are absent. Optional tokens (Jira) default to `None` when unset.
     """
 
     gitlab_token: str = Field(alias="GITLAB_API_TOKEN")
@@ -54,11 +54,6 @@ class CIContext(EnvSettings):
 
     These identify the merge request under review. They are mandatory: the
     review cannot run without knowing which project and MR it targets.
-
-    ``project_dir`` is the root of the checked-out repo under review and the
-    anchor for every consumer-repo read (``.themis-ai/`` config, rules,
-    architecture). GitLab sets ``CI_PROJECT_DIR`` to the clone path; locally it
-    defaults to the current working directory so the same code path is exercised.
     """
 
     project_id: str = Field(alias="CI_PROJECT_ID")

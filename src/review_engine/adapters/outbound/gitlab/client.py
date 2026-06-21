@@ -84,9 +84,12 @@ class GitLabClient(GitLabPort):
 
     @staticmethod
     def _format_body(comment: ReviewComment) -> str:
-        if not comment.links:
+        if not comment.references:
             return comment.content
-        references = "\n".join(f"- {link}" for link in comment.links)
+        references = "\n".join(
+            f'- `{ref.file_path}` — "{ref.rule}"' if ref.rule else f"- `{ref.file_path}`"
+            for ref in comment.references
+        )
         return f"{comment.content}\n\n**References:**\n{references}"
 
     def get_file_content(self) -> str:

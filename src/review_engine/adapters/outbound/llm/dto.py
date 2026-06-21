@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel
 
 
@@ -12,9 +14,16 @@ class CohortDTO(BaseModel):
     changes: list[CohortChangeDTO]
 
 
+class ReferenceDTO(BaseModel):
+    kind: Literal["rule", "architecture"]
+    module: str
+    # The exact rule text being cited; only set when kind == "rule".
+    rule: str | None = None
+
+
 class CommentDTO(BaseModel):
     content: str
-    links: list[str]
+    references: list[ReferenceDTO]
 
 
 class BusinessRequirementDTO(BaseModel):

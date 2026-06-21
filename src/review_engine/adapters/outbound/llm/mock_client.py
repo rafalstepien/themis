@@ -17,7 +17,7 @@ class MockLLMClient(LLMPort):
             cohorts=[],
             business_requirements_matrix=[],
             code_review_comments=[
-                CommentDTO(content="Dummy review comment.", links=[]),
+                CommentDTO(content="Dummy review comment.", references=[]),
             ],
         )
         return to_domain(dto)

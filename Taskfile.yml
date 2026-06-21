@@ -18,7 +18,6 @@ tasks:
     desc: Run linters and type checker locally (auto-fixes and reformats in place)
     cmds:
       - uv run ruff check --fix && uv run ruff format && uv run ty check
-    dotenv: ['.env.test']
 
   check-linters:
     desc: Check linting, formatting and types without modifying files (CI gate)
@@ -29,13 +28,11 @@ tasks:
     desc: Run AI Code Review Engine
     cmds:
       - uv run main.py
-    dotenv: ['.env']
   
   run-indexer:
     desc: Run repo indexer
     cmds:
       - echo "Run indexer"
-    dotenv: ['.env']
 
   build-image:
     desc: Build the Docker image locally (tagged as themis:dev)

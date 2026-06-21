@@ -1,7 +1,11 @@
 from dataclasses import dataclass
 from enum import StrEnum
 
-from src.bootstrap.config import ReviewConfig
+from src.bootstrap.config import (
+    ReviewConfig,
+    architecture_file_path,
+    rule_file_path,
+)
 
 
 @dataclass(frozen=True)
@@ -17,21 +21,6 @@ class AnalysisContext:
 
 
 _SENTINEL_PATHS = {"", "/dev/null"}
-
-
-def _longest_module_match(path: str, modules: list[str]) -> str | None:
-    """Return the most specific declared module that contains ``path``.
-
-    A path belongs to a module when it equals the module path or sits beneath
-    it. When declarations overlap (e.g. ``services`` and ``services/payments``)
-    the longest match wins, so a file is attributed to the most specific module.
-    Sentinel paths (empty or ``/dev/null``, used by GitLab for the missing side
-    of an addition or deletion) match nothing.
-    """
-    if path in _SENTINEL_PATHS:
-        return None
-    matches = [m for m in modules if path == m or path.startswith(m + "/")]
-    return max(matches, key=len) if matches else None
 
 
 class ChangeType(StrEnum):
@@ -122,6 +111,9 @@ class MergeRequest:  # Aggregate Root
     def affected_modules(self, config: ReviewConfig) -> list[str]:
         """Modules touched by this MR, restricted to those declared in config.
 
+        Example: if the MR introduces changes in src/payments and src/logger
+        then this method outputs ["src/payments", "src/logger"].
+
         Both ``new_path`` and ``old_path`` are considered so deletions (whose
         new side is a sentinel) resolve via the old path and cross-module moves
         are attributed to both source and destination modules. The result is
@@ -137,6 +129,21 @@ class MergeRequest:  # Aggregate Root
         return [module for module in config.modules if module in matched]
 
 
+def _longest_module_match(path: str, modules: list[str]) -> str | None:
+    """Return the most specific declared module that contains ``path``.
+
+    A path belongs to a module when it equals the module path or sits beneath
+    it. When declarations overlap (e.g. ``src`` and ``src/orders``)
+    the longest match wins, so a file is attributed to the most specific module.
+    Sentinel paths (empty or ``/dev/null``, used by GitLab for the missing side
+    of an addition or deletion) match nothing.
+    """
+    if path in _SENTINEL_PATHS:
+        return None
+    matches = [m for m in modules if path == m or path.startswith(m + "/")]
+    return max(matches, key=len) if matches else None
+
+
 @dataclass(frozen=True, slots=True)
 class Cohort:
     name: str
@@ -144,10 +151,36 @@ class Cohort:
     change_ids: list[int]
 
 
+class ReferenceKind(StrEnum):
+    RULE = "rule"
+    ARCHITECTURE = "architecture"
+
+
+@dataclass(frozen=True, slots=True)
+class Reference:
+    """A citation grounding a review comment in the repo's documented context.
+
+    A comment may be grounded in a learned ``RULE`` (then ``rule`` carries the
+    exact rule text) or in a module's ``ARCHITECTURE`` contract (whole file,
+    since architecture sections are too dynamic to anchor). ``file_path`` is the
+    repo-relative path of the source file, suitable for citing back in the MR.
+    """
+
+    kind: ReferenceKind
+    module: str
+    rule: str | None = None
+
+    @property
+    def file_path(self) -> str:
+        if self.kind is ReferenceKind.RULE:
+            return rule_file_path(self.module)
+        return architecture_file_path(self.module)
+
+
 @dataclass(frozen=True, slots=True)
 class ReviewComment:
     content: str
-    links: list[str]
+    references: list[Reference]
     # TODO Phase 2 (Milestone 2): add file path + line anchor from Tree-sitter offsets
 
 

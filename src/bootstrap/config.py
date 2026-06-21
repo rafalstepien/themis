@@ -7,7 +7,8 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_CONFIG_PATH = ".themis-ai/config.yaml"
+THEMIS_DIR = ".themis-ai"
+DEFAULT_CONFIG_PATH = f"{THEMIS_DIR}/config.yaml"
 
 
 class LLMProvider(StrEnum):

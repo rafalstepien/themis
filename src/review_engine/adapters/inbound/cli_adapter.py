@@ -3,7 +3,7 @@ import sys
 
 import click
 
-from src.bootstrap.config import DEFAULT_CONFIG_PATH, Config
+from src.bootstrap.config import DEFAULT_CONFIG_PATH, THEMIS_DIR, Config
 from src.bootstrap.environment import CIContext, Secrets
 from src.bootstrap.exceptions import MissingEnvironmentError
 from src.review_engine.adapters.outbound import (
@@ -53,7 +53,9 @@ class ReviewEngineCLIAdapter:
             llm_port=llm_client,
             business_context_port=JiraClient(token=secrets.jira_token),
             best_practices_port=BestPracticesClient(),
-            module_context_port=LocalFileContextAdapter(),
+            module_context_port=LocalFileContextAdapter(
+                themis_dir=ci_context.project_dir / THEMIS_DIR
+            ),
         )
 
         try:

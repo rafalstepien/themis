@@ -1,165 +1,144 @@
 <div align="center">
 
-# ⚖️ Themis
+![Themis hero image](./static/hero.png)
 
-### ⚡ The GitLab-native, AI code reviewer that runs entirely on your private CI runners.
-### 🔒 Entirely non-agentic, follows a strict Bring-Your-Own-Key (BYOK) model.
-- Zero Third-Party Infra: Execution happens 100% inside your GitLab CI runners.
-- Data Isolation: Your source code never leaves your corporate boundary or hits an external SaaS dashboard.
-- LLM Transparency: It connects directly to your enterprise LLM provider via masked environment variables.
+### Open-source, high-signal CI plugin for AI code reviews — your code never leaves your runners.
 
-[![Python 3.14+](https://img.shields.io/badge/python-3.14%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Build](https://img.shields.io/github/actions/workflow/status/rafalstepien/themis/ci.yml?branch=main&label=CI)](https://github.com/rafalstepien/themis/actions)
-[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 </div>
 
 ---
 
-> **Themis** is an open-source, GitLab-native AI code review gate. It plugs into your CI/CD pipeline as a single component, analyzes every Merge Request for logical bugs, security vulnerabilities, and architectural violations, then posts structured, byte-offset-grounded feedback directly into the MR thread — all without your source code ever leaving your own runners.
+> **Status: 0.1.0** — the core review pipeline works end-to-end. AST precision, extra LLM adapters, and the indexer are on the roadmap. Built in public — follow along. ⭐
 
 ---
 
-## About the Name
+## See it work
+Themis posts review comments directly inside your GitLab Merge Requests. The fastest way to judge it is to look at real reviews it has left:
 
-**Themis** is named after the Greek goddess of order and justice. While often associated with justice alone, Themis was fundamentally a guardian of **order** — the personification of divine law, fairness, and the natural order that prevents chaos. This mirrors the tool's core mission: enforcing order and consistency in your codebase through automated, principled code review, ensuring that architecture, practices, and standards remain coherent across your entire system.
+**Live examples:** 
 
----
+- [Architecture violation](https://gitlab.com/rafalstepien/themis-demo/-/merge_requests/1)
+![Architecture violation comment](./static/comment-arch.png)
+
+- [Team-agreed rule violation](https://gitlab.com/rafalstepien/themis-demo/-/merge_requests/2)
+![Rule violation comment](./static/comment-rule.png)
+
+## Status (extended)
+
+### What works now (0.1.0)
+
+- ✅ **End-to-end pipeline** — include `themis-ci` in your CI pipeline and it runs on every Merge Request, posting comments automatically.
+- ✅ **OpenAI integration** — use any OpenAI model under the BYOK (Bring-Your-Own-Key) model.
+- ✅ **Compliance by design** — your source code never leaves your runner; only the review request reaches the LLM you control.
+- ✅ **Context-aware reviews** — Themis loads your architecture guides and accumulated rules from past Merge Requests into the review context, producing high-signal feedback.
+- ✅ **Module inference** — once configured, Themis identifies which modules a Merge Request touches and scopes the review accordingly.
+
+### On the roadmap
+
+- Async requests, retries
+- AST-native engine for byte-offset-grounded comments
+- Additional LLM adapters: Claude, Gemini, and LiteLLM
+- Smarter noise filtering — suppress anything your linters already catch
+- Jira adapter to pull business context into reviews
+- Verification of Merge Requests against linked business requirements
+- Clustering changes into cohorts to make large diffs easier to review
+- A bundled knowledge base of technology-specific best practices
+- An indexer that generates per-repository rules from historical MR discussions
+- Scheduling that indexer as a recurring job
+
+For detailed milestone definitions, see [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Why Themis?
 
-Most AI code review tools either route your source code through a third-party SaaS, flood your MR with low-value noise, or drag reviewers into a separate dashboard. Themis is built differently:
+- **🔑 Your LLM, your rules** — a strict BYOK model: you bring your own keys and talk to your own LLM APIs.
+- **🔒 Your code stays yours** — reviews run on your runners. Compliance-friendly by design.
+- **🧠 Knows your context** — distills rules from past MR discussions into the review context.
+- **📡 High signal, not noise** — instead of acting as an expensive linter, Themis flags the architecture and design issues that break production and erode maintainability.
+- **⚡ Quick setup** — three steps: create a bot account → set two variables → include the component.
 
-| Pain point | Themis approach |
+## How it works
+
+**Workflow:** from the perspective of the developer
+![Pipeline flow](./static/pipeline.png)
+
+**Architecture:** what are the components and how they work together
+![Components architecture](./static/architecture.png)
+
+Themis ships as a single Docker image with two modes (`engine` and `indexer`), pulled into your pipeline by a thin GitLab CI/CD component. The repositories involved:
+
+| Repository | Role |
 |---|---|
-| Source code exits corporate boundary | Runs entirely on **your** GitLab runners — code never leaves |
-| AI produces 40 "fix your semicolons" comments | Cross-references your linter config and suppresses anything it already catches |
-| Another dashboard to maintain | Inline comments, cohort summaries, and requirements matrix — all native GitLab UI |
-| Hours of setup and external infra | Three lines in `.gitlab-ci.yml`, two masked variables — done in 5 minutes |
-
----
-
-## Features
-
-- **Bring Your Own Key (BYOK)** — LLM API token stays in GitLab Masked Variables; your source code never transits a third-party service
-- **AST-native precision** — Tree-sitter chunks diffs into structural code blocks; every comment is grounded to the exact offending construct, not a raw line number
-- **5-minute onboarding** — ships as a GitLab CI/CD Component; add three lines to `.gitlab-ci.yml` and you're live
-- **High-signal noise filtering** — reads your linter config (`.eslintrc.json`, `pyproject.toml`, …) and suppresses any nit your linter already catches
-- **Multi-context synthesis** — aggregates module rules, architecture constraints, domain best practices, and Jira ticket requirements into a single grounded review prompt
-- **Native GitLab UX** — cohort summaries, a ticket requirements matrix, and inline comments posted directly via the GitLab API
-
----
+| [`themis`](https://github.com/rafalstepien/themis) | Engine + Indexer source code (this repo) |
+| [`themis-ci`](https://gitlab.com/rafalstepien/themis-ci) | GitLab CI/CD component — the thin wrapper you include |
+| [`themis-demo`](https://gitlab.com/rafalstepien/themis-demo) | Demo repository with real reviews |
+| [Docker Hub](https://hub.docker.com/repository/docker/rafalstepien/themis) | Published images |
 
 ## Quick Start
 
-**Step 1 — Create a dedicated bot account for Themis:**
+Setup is three steps. After that, every Merge Request is reviewed automatically.
 
-Themis posts review comments on behalf of a GitLab user. You must create a dedicated service account for this — do not use a personal account, as its token would grant Themis access far beyond what it needs.
+### Step 1 — Create a dedicated bot account
 
-1. **Create a new GitLab account** for the bot (e.g. `themis-reviewer` or `your-org-code-reviewer`). Use a shared team mailbox (e.g. `themis-reviewer@your-company.com`) so no single person owns it.
-2. **Add the bot account to each repository** that Themis will review:
-   - Go to your project → **Manage → Members → Invite members**.
-   - Search for the bot account and set its role to **Developer** (Themis needs permission to read diffs and post comments; Reporter is not enough).
-   - Click **Invite**.
-3. **Generate a GitLab personal access token** for the bot account:
-   - Sign in as the bot account.
-   - Go to **User settings → Access tokens → Add new token**.
-   - Give it a descriptive name (e.g. `themis-ci`), set an expiry date appropriate for your rotation policy, and grant the **`api`** scope.
-   - Copy the token — you will use it as `GITLAB_API_TOKEN` in the next step.
+Themis posts comments on behalf of a GitLab user. Create a **dedicated service account** for this rather than using a personal account, whose token would grant Themis far more access than it needs.
 
-**Step 2 — Add Themis to your Merge Request pipeline:**
+1. **Create a new GitLab account** for the bot (e.g. `themis-reviewer`). Use a shared team mailbox (e.g. `themis-reviewer@your-company.com`) so no single person owns it.
+2. **Add the bot to each repository** Themis will review: go to your project → **Manage → Members → Invite members**, find the bot account, and set its role to **Developer** (Reporter is not enough — Themis needs to read diffs and post comments).
+3. **Generate a personal access token** for the bot: sign in as the bot → **User settings → Access tokens → Add new token**. Name it (e.g. `themis-ci`), set an expiry matching your rotation policy, and grant the **`api`** scope. Copy the token — you'll use it as `GITLAB_API_TOKEN` below.
+
+### Step 2 — Include Themis in your pipeline
+
+Add the component to your `.gitlab-ci.yml`:
 
 ```yaml
-# .gitlab-ci.yml
 include:
-  - component: gitlab.com/your-org/themis/review@~latest
+  - component: gitlab.com/rafalstepien/themis-ci/themis-ci@0.1.0
 
 stages:
   - review
 ```
 
-**Step 3 — Set two masked variables in your GitLab project settings:**
+Create config file in `.themis-ai/config.yaml` (see **Configuration** section below). Example is also available [here](https://gitlab.com/rafalstepien/themis-demo/-/blob/main/.themis-ai/config.yaml?ref_type=heads)
 
-Go to your project → **Settings → CI/CD → Variables** and add:
+### Step 3 — Set two masked variables
+
+Go to your project → **Settings → CI/CD → Variables** and add both, marked as **Masked** so they never appear in job logs:
 
 | Variable | Description |
 |---|---|
 | `LLM_API_TOKEN` | API key for your LLM provider |
 | `GITLAB_API_TOKEN` | Personal access token of the Themis bot account (from Step 1) |
 
-Mark both variables as **Masked** to prevent them from appearing in job logs.
+> Note: Ensure variables are not set as "Protected" because it will block passing them to the script.
 
-**Step 4 — Open a Merge Request.** Themis runs automatically and posts inline review comments under the bot account.
-
-> Optional: set `JIRA_API_TOKEN` to enable automatic ticket requirements verification inside the MR.
-
----
-
-## How It Works
-
-```
-MR opened  →  CI triggers Themis  →  fetch changed files
-    →  AST chunking  →  module identification
-    →  context aggregation (rules, architecture, best practices, Jira)
-    →  single LLM call  →  structured JSON output
-    →  GitLab API: post cohorts + requirements matrix + inline comments
-```
-
-Themis ships as a single Docker image with two modes:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        Docker Image                         │
-│                                                             │
-│  ┌──────────────────────────┐  ┌─────────────────────────┐  │
-│  │   AI Code Review Engine  │  │     Async Indexer       │  │
-│  │                          │  │                         │  │
-│  │  GitLab API → diff       │  │  Crawls historical MRs  │  │
-│  │  Tree-sitter → AST       │  │  Generates rules.json   │  │
-│  │  Context aggregation     │  │  Generates arch.json    │  │
-│  │  LLM → review            │  │  Commits back to repo   │  │
-│  │  GitLab API → post       │  │                         │  │
-│  └──────────────────────────┘  └─────────────────────────┘  │
-│                                                             │
-│  ai-review-tool --mode=engine | --mode=indexer              │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Context Files
-
-Themis reads optional per-module context files committed alongside your code:
-
-| File | Purpose |
-|------|---------|
-| `<module>/rules.json` | Accumulated review rules derived from past MR discussions |
-| `<module>/architecture.json` | Module architecture constraints (e.g. hexagonal boundaries, forbidden imports) |
-| `best_practices/<tech>.toml` | Community-maintained, technology-specific rulesets (Django, FastAPI, security, …) |
-
-These files can be authored manually or auto-generated by the **Async Indexer** component, which crawls your historical MR discussions and distills them into reviewable rules.
-
----
+**That's it.** Open a Merge Request and Themis runs automatically, posting inline comments under the bot account.
 
 ## Configuration
 
-### GitLab Masked Variables
+Themis reads a `config.yml` committed to the reviewed repository:
 
-| Variable | Required | Description |
-|----------|:--------:|-------------|
-| `LLM_API_TOKEN` | ✅ | API key for your LLM provider |
-| `GITLAB_API_TOKEN` | ✅ | GitLab token with `api` scope |
-| `JIRA_API_TOKEN` | ➖ | Enables Jira ticket requirements context |
+```yaml
+version: 1
 
-### `config.json` (committed to the reviewed repo)
+review:
+  max_file_chars: 60000   # skip files larger than this
+  max_changed_files: 50   # skip the MR entirely if it changes more files than this
+  modules:                # the modules that make up your repo
+    - src/accounts/
+    - src/catalog/
+    - src/orders/
+    - src/payments/
 
-Per-repo overrides — documentation landing in `v1.0.0`.
+llm:                      # the LLM provider and model of your choice
+  provider: openai
+  model: gpt-5-nano
+```
 
----
+## Contributing
 
-## Local Development
+Contributions aligned with the roadmap are welcome.
 
 ### Prerequisites
 
@@ -178,73 +157,23 @@ cd themis
 uv sync --group dev
 ```
 
-### Common commands
+Before contributing, please:
 
-```bash
-task run-linters     # lint & format
-uv run pytest        # run the test suite
-task run-engine      # run the review engine locally
-task run-indexer     # run the async indexer locally
-```
-
----
-
-## Roadmap
-
-| Phase | Version | Status |
-|-------|---------|:------:|
-| Core pipeline — CLI → LLM → GitLab comment | `v0.1.0-alpha` | 🔨 In progress |
-| AST precision, linter filtering, structured output | `v1.0.0` | 📋 Planned |
-| Async Indexer, Jira sync, `/dismiss` feedback loop | `v1.1.0+` | 📋 Planned |
-
-See [`docs/roadmap.md`](docs/roadmap.md) for full milestone definitions and acceptance criteria.
-
----
-
-## Project Structure
-
-```
-themis/
-├── src/
-│   ├── cli/                        # CLI entrypoint (Click)
-│   ├── review_engine/
-│   │   ├── domain/                 # Pure business logic, no I/O
-│   │   │   ├── models/
-│   │   │   └── services/
-│   │   ├── ports/                  # Interfaces (inbound & outbound)
-│   │   └── adapters/               # Concrete implementations
-│   │       ├── inbound/            # CLI adapter
-│   │       └── outbound/           # GitLab, LLM, Jira, AST clients
-│   ├── indexer/                    # Async Indexer component
-│   └── best_practices/             # Bundled best-practice rulesets
-├── tests/
-├── docs/
-├── adr/                            # Architecture Decision Records
-├── Taskfile.yml
-└── pyproject.toml
-```
-
-The codebase follows **Hexagonal Architecture (Ports & Adapters)** — the domain layer contains zero infrastructure dependencies. See [`adr/`](adr/) for design decisions and [`docs/coding-standards.md`](docs/coding-standards.md) for coding conventions.
-
----
-
-## Contributing
-
-Contributions are welcome! Read [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup instructions, branching conventions, and how to run the full test suite locally.
-
-**Before opening a PR:**
-
-1. Review [`docs/roadmap.md`](docs/roadmap.md) and open an issue to discuss significant changes
-2. Check [`adr/`](adr/) — patterns that conflict with existing ADRs will be rejected
-3. Run `task run-linters && uv run pytest`
-4. Keep commits small and atomic — one logical change per commit
-
-New to the codebase? Look for [`good first issue`](https://github.com/rafalstepien/themis/issues?q=label%3A%22good+first+issue%22) labels — these are curated tasks that don't require deep familiarity with the core engine.
-
-Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before participating.
-
----
+- Read the Architecture Decision Records in [`adr/`](adr/)
+- Check the roadmap in [`docs/roadmap.md`](docs/roadmap.md)
+- Open an issue for any new feature (aligned with the roadmap) or bug before starting work
 
 ## License
 
 [MIT](LICENSE)
+
+---
+
+<details>
+<summary><strong>About the name</strong></summary>
+
+<br>
+
+Themis is named after the Greek goddess of order and justice. While often associated with justice alone, she was fundamentally a guardian of **order** — the personification of divine law, fairness, and the natural balance that prevents chaos. That mirrors the tool's mission: enforcing order and consistency across a codebase through automated, principled review, keeping architecture, practices, and standards coherent as the system grows.
+
+</details>

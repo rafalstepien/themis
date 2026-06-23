@@ -13,9 +13,9 @@ review:
   max_file_chars: 12345
   max_changed_files: 9
   modules:
-    - services/payments
-    - services/booking
-    - webapps/boost
+    - src/orders
+    - src/engine
+    - helpers/logging
 
 llm:
   provider: anthropic
@@ -44,9 +44,9 @@ def test_loads_full_config(tmp_path: Path) -> None:
     assert config.review.max_file_chars == 12345
     assert config.review.max_changed_files == 9
     assert config.review.modules == [
-        "services/payments",
-        "services/booking",
-        "webapps/boost",
+        "src/orders",
+        "src/engine",
+        "helpers/logging",
     ]
     assert config.llm.provider is LLMProvider.ANTHROPIC
     assert config.llm.model == "claude-opus-4-8"

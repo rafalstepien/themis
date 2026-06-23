@@ -1,3 +1,5 @@
+import logging
+
 from src.bootstrap.config import ReviewConfig
 from src.review_engine.domain.models import AnalysisContext
 from src.review_engine.ports.outbound import (
@@ -7,6 +9,8 @@ from src.review_engine.ports.outbound import (
     LLMPort,
     ModuleContextPort,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ReviewOrchestrator:
@@ -45,6 +49,7 @@ class ReviewOrchestrator:
             business_context=business_context,
             best_practices_context=best_practices_context,
         )
+        self._log_loaded_context(modules, analysis_context)
         review = self.llm_port.generate_code_review(mr, analysis_context)
 
         for comment in review.comments:
@@ -52,3 +57,41 @@ class ReviewOrchestrator:
 
     def _get_technologies(self) -> list:
         return list()
+
+    @staticmethod
+    def _log_loaded_context(modules: list[str], context: AnalysisContext) -> None:
+        """Report which review contexts were gathered for this MR.
+
+        INFO gives a one-line presence/size summary; DEBUG dumps the full
+        loaded content (enable with ``THEMIS_LOG_LEVEL=DEBUG``).
+        """
+
+        def _summary(value) -> str:
+            if not value:
+                return "absent"
+            if isinstance(value, dict):
+                return f"present ({len(value)} entries)"
+            if isinstance(value, str):
+                return f"present ({len(value)} chars)"
+            return "present"
+
+        logger.info(
+            "Loaded context for modules %s | architecture rules: %s | past-MR rules: %s "
+            "| best practices: %s | business context: %s",
+            modules or "(none)",
+            _summary(context.architecture_rules),
+            _summary(context.past_mr_rules),
+            _summary(context.best_practices_context),
+            _summary(context.business_context),
+        )
+        logger.debug(
+            "Full loaded context:\n"
+            "  architecture_rules=%r\n"
+            "  past_mr_rules=%r\n"
+            "  best_practices_context=%r\n"
+            "  business_context=%r",
+            context.architecture_rules,
+            context.past_mr_rules,
+            context.best_practices_context,
+            context.business_context,
+        )

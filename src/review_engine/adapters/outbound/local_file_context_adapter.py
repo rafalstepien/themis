@@ -2,22 +2,23 @@ import json
 import logging
 from pathlib import Path
 
+from src.bootstrap.config import (
+    ARCHITECTURE_FILENAME,
+    ARCHITECTURE_SUBDIR,
+    RULES_FILENAME,
+    RULES_SUBDIR,
+)
 from src.review_engine.ports.outbound import ModuleContextPort
 
 logger = logging.getLogger(__name__)
-
-_RULES_SUBDIR = "rules"
-_RULES_FILENAME = "rule.json"
-_ARCHITECTURE_SUBDIR = "architecture"
-_ARCHITECTURE_FILENAME = "architecture.json"
 
 
 class LocalFileContextAdapter(ModuleContextPort):
     """Loads per-module rules and architecture context from the consumer repo.
 
     For example if the repo has a module src/payment, then this adapter will
-        - load architecture rules from .themis-ai/rules/payment/rules.json
-        - load past MR intelligence from .themis-ai/architecture/payment/architecture.json
+        - load past MR rules from .themis-ai/rules/payment/rule.json
+        - load architecture context from .themis-ai/architecture/payment/architecture.json
 
     The inner JSON shape is intentionally NOT pinned to a DTO: this content is
     produced by the (LLM-driven) Indexer and consumed only as LLM prompt
@@ -30,10 +31,10 @@ class LocalFileContextAdapter(ModuleContextPort):
         self._themis_dir = themis_dir
 
     def load_rules(self, modules: list[str]) -> dict:
-        return self._load(modules, _RULES_SUBDIR, _RULES_FILENAME)
+        return self._load(modules, RULES_SUBDIR, RULES_FILENAME)
 
     def load_architecture(self, modules: list[str]) -> dict:
-        return self._load(modules, _ARCHITECTURE_SUBDIR, _ARCHITECTURE_FILENAME)
+        return self._load(modules, ARCHITECTURE_SUBDIR, ARCHITECTURE_FILENAME)
 
     def _load(self, modules: list[str], subdir: str, filename: str) -> dict:
         loaded: dict = {}

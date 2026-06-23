@@ -10,6 +10,19 @@ logger = logging.getLogger(__name__)
 THEMIS_DIR = ".themis-ai"
 DEFAULT_CONFIG_PATH = f"{THEMIS_DIR}/config.yaml"
 
+RULES_SUBDIR = "rules"
+RULES_FILENAME = "rule.json"
+ARCHITECTURE_SUBDIR = "architecture"
+ARCHITECTURE_FILENAME = "architecture.json"
+
+
+def rule_file_path(module: str) -> str:
+    return f"{THEMIS_DIR}/{RULES_SUBDIR}/{module}/{RULES_FILENAME}"
+
+
+def architecture_file_path(module: str) -> str:
+    return f"{THEMIS_DIR}/{ARCHITECTURE_SUBDIR}/{module}/{ARCHITECTURE_FILENAME}"
+
 
 class LLMProvider(StrEnum):
     OPENAI = "openai"

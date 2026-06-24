@@ -2,7 +2,7 @@ from enum import StrEnum
 import logging
 from pathlib import Path
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -26,6 +26,7 @@ def architecture_file_path(module: str) -> str:
 
 class LLMProvider(StrEnum):
     OPENAI = "openai"
+    OPENAI_COMPATIBLE = "openai_compatible"
     ANTHROPIC = "anthropic"
     GEMINI = "gemini"
 
@@ -39,6 +40,13 @@ class ReviewConfig(BaseModel):
 class LLMConfig(BaseModel):
     provider: LLMProvider
     model: str
+    base_url: str | None = None
+
+    @model_validator(mode="after")
+    def _require_base_url_for_compatible(self) -> "LLMConfig":
+        if self.provider is LLMProvider.OPENAI_COMPATIBLE and not self.base_url:
+            raise ValueError("'base_url' is required when provider is 'openai_compatible'.")
+        return self
 
 
 class Config(BaseModel):

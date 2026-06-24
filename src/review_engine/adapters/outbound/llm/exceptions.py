@@ -34,6 +34,11 @@ class LLMResponseError(LLMError):
 def handle_llm_api_errors():
     try:
         yield
+    except (openai.AuthenticationError, openai.PermissionDeniedError) as e:
+        raise LLMAPIError(
+            f"LLM provider rejected the credentials (HTTP {e.status_code}) — check LLM_API_TOKEN.",
+            status_code=e.status_code,
+        ) from e
     except openai.APIStatusError as e:
         raise LLMAPIError(
             f"LLM provider returned HTTP {e.status_code}", status_code=e.status_code

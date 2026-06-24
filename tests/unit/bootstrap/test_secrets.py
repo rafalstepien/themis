@@ -4,7 +4,7 @@ from src.bootstrap.environment import Secrets
 from src.bootstrap.exceptions import MissingEnvironmentError
 
 
-def test_loads_all_tokens_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_loads_all_secrets_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GITLAB_API_TOKEN", "gl-token")
     monkeypatch.setenv("LLM_API_TOKEN", "llm-token")
     monkeypatch.setenv("JIRA_API_TOKEN", "jira-token")
@@ -16,7 +16,7 @@ def test_loads_all_tokens_from_environment(monkeypatch: pytest.MonkeyPatch) -> N
     assert secrets.jira_token == "jira-token"
 
 
-def test_jira_token_defaults_to_none_when_absent(
+def test_jira_secret_defaults_to_none_when_absent(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("GITLAB_API_TOKEN", "gl-token")

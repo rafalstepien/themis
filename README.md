@@ -11,7 +11,7 @@
 
 ---
 
-> **Status: 0.1.0** — the core review pipeline works end-to-end. AST precision, extra LLM adapters, and the indexer are on the roadmap. Built in public — follow along. ⭐
+> **Status: 0.1.0:** the core review pipeline works end-to-end. AST precision, extra LLM adapters, and the indexer are on the roadmap. Built in public. Follow along. ⭐
 
 ---
 
@@ -38,26 +38,27 @@ Themis posts review comments directly inside your GitLab Merge Requests. The fas
 
 ### On the roadmap
 
-- Async requests, retries
+- Async requests, retries, rules on when to re-run Code Review
 - AST-native engine for byte-offset-grounded comments
 - Additional LLM adapters: Claude, Gemini, and LiteLLM
-- Smarter noise filtering — suppress anything your linters already catch
+- Smarter noise filtering: suppress anything linters already catch
 - Jira adapter to pull business context into reviews
 - Verification of Merge Requests against linked business requirements
 - Clustering changes into cohorts to make large diffs easier to review
 - A bundled knowledge base of technology-specific best practices
 - An indexer that generates per-repository rules from historical MR discussions
-- Scheduling that indexer as a recurring job
+- Scheduling indexer as a recurring job in the repo
+- Add support for GitHub so that we can use themis to review our own pull requests
 
 For detailed milestone definitions, see [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Why Themis?
 
-- **🔑 Your LLM, your rules** — a strict BYOK model: you bring your own keys and talk to your own LLM APIs.
-- **🔒 Your code stays yours** — reviews run on your runners. Compliance-friendly by design.
-- **🧠 Knows your context** — distills rules from past MR discussions into the review context.
-- **📡 High signal, not noise** — instead of acting as an expensive linter, Themis flags the architecture and design issues that break production and erode maintainability.
-- **⚡ Quick setup** — three steps: create a bot account → set two variables → include the component.
+- **🔑 Your LLM, your rules:** a strict BYOK model. You bring your own keys and talk to your own LLM APIs.
+- **🔒 Your code stays yours:** Reviews run on your runners. Compliance-friendly by design.
+- **🧠 Knows your context:** Understands rules from past MR discussions into the review context.
+- **📡 High signal, not noise:** Instead of acting as an expensive linter, Themis flags the architecture and design issues that break production or introduce bad patterns.
+- **⚡ Quick setup:** Three steps. Create a bot account → setup variables and config → include the component.
 
 ## How it works
 
@@ -80,15 +81,15 @@ Themis ships as a single Docker image with two modes (`engine` and `indexer`), p
 
 Setup is three steps. After that, every Merge Request is reviewed automatically.
 
-### Step 1 — Create a dedicated bot account
+### Step 1: Create a dedicated bot account
 
 Themis posts comments on behalf of a GitLab user. Create a **dedicated service account** for this rather than using a personal account, whose token would grant Themis far more access than it needs.
 
 1. **Create a new GitLab account** for the bot (e.g. `themis-reviewer`). Use a shared team mailbox (e.g. `themis-reviewer@your-company.com`) so no single person owns it.
 2. **Add the bot to each repository** Themis will review: go to your project → **Manage → Members → Invite members**, find the bot account, and set its role to **Developer** (Reporter is not enough — Themis needs to read diffs and post comments).
-3. **Generate a personal access token** for the bot: sign in as the bot → **User settings → Access tokens → Add new token**. Name it (e.g. `themis-ci`), set an expiry matching your rotation policy, and grant the **`api`** scope. Copy the token — you'll use it as `GITLAB_API_TOKEN` below.
+3. **Generate a personal access token** for the bot: sign in as the bot → **User settings → Access tokens → Add new token**. Name it (e.g. `themis-ci`), set an expiry matching your rotation policy, and grant the **`api`** scope. Copy the token, you'll use it as `GITLAB_API_TOKEN` below.
 
-### Step 2 — Include Themis in your pipeline
+### Step 2: Include Themis in your pipeline
 
 Add the component to your `.gitlab-ci.yml`:
 
@@ -102,7 +103,7 @@ stages:
 
 Create config file in `.themis-ai/config.yaml` (see **Configuration** section below). Example is also available [here](https://gitlab.com/rafalstepien/themis-demo/-/blob/main/.themis-ai/config.yaml?ref_type=heads)
 
-### Step 3 — Set two masked variables
+### Step 3: Set two masked (not protected) variables
 
 Go to your project → **Settings → CI/CD → Variables** and add both, marked as **Masked** so they never appear in job logs:
 

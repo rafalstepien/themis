@@ -1,0 +1,12 @@
+## Introducing AST
+1. Multi-language fallback is mandatory, not optional. Tree-sitter needs a grammar per language. themis-example is pure Python, but a real consumer repo has YAML, SQL, JS, Dockerfiles, Markdown. Parsing must degrade gracefully to raw-diff for unsupported/unparseable files — a parse failure can never block a review. Decide the contract: "AST-chunk when we have a grammar and it parses; otherwise raw_diff." This keeps your v0.1.0 bar ("real review, doesn't fail") safe.
+2. You map ranges on the new file, which orphans deletions. Pure deletions exist only in old_content and have no new-side anchor. Your ChangeType enum (addition/deletion/content_change, currently a TODO) is exactly the seam for this — deletions anchor to the surrounding surviving node, or you parse old_content too.
+3. Changes that aren't inside a function. Import edits, module-level constants, decorators, class body outside methods. "Smallest enclosing named node" degenerates to "the whole module." Define a default chunk for these (e.g., the import block as its own unit) — and note that import-level changes are precisely where your architecture findings live, so don't discard them.
+4. Giant enclosing units re-introduce the noise you're removing. Sending a whole 500-line function defeats the purpose and blows tokens. You need a max_unit_lines cap with fallback to "changed lines + N context." This belongs alongside your existing config.yaml size limits.
+5. Inline-anchor reconciliation (your selected TODO Phase 2). AST line numbers are file-relative; GitLab inline comments need a position tied to the diff (base/head SHAs + new_line, and the line must be part of the diff). So the AST line is necessary but not sufficient — you'll map AST span → GitLab position, and a comment on an unchanged line inside a changed unit may not be postable inline at all. Worth a spike before you commit to "inline everywhere."
+6. Token/quality is not monotonic. More context ≠ better review — models get "lost in the middle." The chunking win is precision (relevant whole units), not volume.
+
+
+## Making LLM agentic and letting it request to view files while reviewing
+- constrain to module tree, not "any file"
+- constrain the number of files to be viewed

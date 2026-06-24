@@ -17,8 +17,7 @@ class CohortDTO(BaseModel):
 class ReferenceDTO(BaseModel):
     kind: Literal["rule", "architecture"]
     module: str
-    # The exact rule text being cited; only set when kind == "rule".
-    rule: str | None = None
+    rule: str | None = None  # TODO: consider rules to have ids for references
 
 
 class CommentDTO(BaseModel):

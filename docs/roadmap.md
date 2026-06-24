@@ -1,24 +1,8 @@
 ## Core Value To Deliver
 Getting high-signal, contextual feedback directly inside a GitLab Merge Request without the code leaving user's infrastructure.
 
-## MVP Scope
-- Building the core engine
-- Delaying the build of background workers until the engine is rock-solid
-
 ## Implementation phases
-### ✅ Phase 1: The Core Pipeline (`0.1.0`)
-#### Implementation
-- [x] Build CLI inside the Docker image that accepts the reference and target branches, fetches diff using GitLab API and prints it
-- [x] Build the CI/CD Component Wrapper that pulls Docker image with Engine and runs a shell script
-- [x] Add the LLM integration: Connect the CLI to LLM provider using BYOK model via masked env variables
-- [x] Parse the LLM output and post it as a comments on the target GitLab MR
-- [x] Structured Output: Enforce JSON schema responses from the LLM to separate Cohorts, Business Requirements, and Code Review comments
-- [x] Static Conext Files: Support manually written rules.json and architecture.json per module to extend the context with understanding the domain and architecture rules
-#### Testing
-Test that the GitLab CI/CD component triggers correctly, the configuration variables pass through seamlessly, and the engine successfully posts something to the MR thread via the GitLab API.
-- [x] Setup test GitLab repository and configure it to run a pipeline on every Merge Request. Make the pipeline pull local/alpha Docker image
-- [x] Mock LLM API (`if config.test_mode == 'true'`) return hardcoded JSON with dummy review comments
-
+### (✅ done) Phase 1: The Core Pipeline (`0.1.0`)
 
 ### Phase 2: High-Signal & Precision (`1.0.0`)
 #### Implementation
@@ -40,24 +24,6 @@ Test that the GitLab CI/CD component triggers correctly, the configuration varia
 #### Testing
 - [ ] Indexer Snapshots (Functional): Run your Async Indexer against your test GitLab repository's history. Instead of manually verifying the output every time, use snapshot testing: compare the newly generated rules.json against a known "good" baseline file. If they match, the indexer works.
 - [ ] Webhook Payload Simulation (Integration): You don't need to manually type /dismiss in GitLab to test the learning loop every time. Capture a real webhook JSON payload from GitLab once, save it locally, and write a script to HTTP POST that exact payload directly to your local engine or trigger API to verify it kicks off the rules.json update job
-
-## Milestones
-1. The Pipeline Echo
-* Definition: The CI/CD engine can intercept an MR event and leave a hardcoded comment.
-* Measure: Open a test MR in a dummy repo; verify a "Hello World" comment automatically appears via the GitLab API within 60 seconds.
-
-2. AST Line Precision
-* Definition: Comments are tied to structural code changes, not generic diff blocks.
-* Measure: Feed a file with an obvious structural bug. Verify the LLM comment maps to the exact line of the offending function using Tree-sitter offsets.
-
-3. Noise isolation
-* Definition: The engine ignores stylistic formatting and only flags logical or security flaws.
-* Measure: Intentionally introduce an unused import and a critical logic flaw. Verify the engine completely ignores the import (linter nit) but catches the logic bug.
-
-4. Closed Context Loop (Full Launch 🚀🚀🚀)
-* Definition: The engine leverages historical context files during a review.
-* Measure: Provide a manual architecture.json restricting a folder from importing an external library. Break that rule in an MR and confirm the engine calls it out specifically referencing that context file.
-
 
 ## Measuring adoption
 - DockerHub pulls: tracking unique image download trends

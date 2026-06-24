@@ -30,6 +30,15 @@ llm:
   model: gpt-4o
 """
 
+_OPENAI_COMPATIBLE_CONFIG = """
+version: 1
+
+llm:
+  provider: openai_compatible
+  model: qwen2.5-coder
+  base_url: http://localhost:8000/v1
+"""
+
 
 def _write_config(tmp_path: Path, body: str) -> str:
     path = tmp_path / "config.yaml"
@@ -88,3 +97,17 @@ def test_custom_path_argument_is_honoured(tmp_path: Path) -> None:
     config = ThemisConfig.from_yaml(str(path))
 
     assert config.llm.model == "claude-opus-4-8"
+
+
+def test_openai_compatible_provider_loads_base_url(tmp_path: Path) -> None:
+    config = Config.from_yaml(_write_config(tmp_path, _OPENAI_COMPATIBLE_CONFIG))
+
+    assert config.llm.provider is LLMProvider.OPENAI_COMPATIBLE
+    assert config.llm.base_url == "http://localhost:8000/v1"
+
+
+def test_openai_compatible_provider_requires_base_url(tmp_path: Path) -> None:
+    body = _OPENAI_COMPATIBLE_CONFIG.replace("  base_url: http://localhost:8000/v1\n", "")
+
+    with pytest.raises(ValidationError, match="base_url"):
+        Config.from_yaml(_write_config(tmp_path, body))

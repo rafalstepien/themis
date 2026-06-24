@@ -3,7 +3,7 @@ import sys
 
 import click
 
-from src.bootstrap.config import DEFAULT_CONFIG_PATH, THEMIS_DIR, Config
+from src.bootstrap.config import DEFAULT_CONFIG_PATH, THEMIS_DIR, ThemisConfig
 from src.bootstrap.environment import CIContext, Secrets
 from src.bootstrap.exceptions import MissingEnvironmentError
 from src.review_engine.adapters.outbound import (
@@ -33,7 +33,7 @@ class ReviewEngineCLIAdapter:
             click.echo(f"CRITICAL: {exc}", err=True)
             sys.exit(1)
 
-        config = Config.from_yaml(ci_context.project_dir / DEFAULT_CONFIG_PATH)
+        config = ThemisConfig.from_yaml(ci_context.project_dir / DEFAULT_CONFIG_PATH)
 
         gitlab_client = GitLabClient(
             token=secrets.gitlab_token,

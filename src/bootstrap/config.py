@@ -41,14 +41,14 @@ class LLMConfig(BaseModel):
     model: str
 
 
-class Config(BaseModel):
+class ThemisConfig(BaseModel):
     version: int
     test_mode: bool = Field(default=False)
     review: ReviewConfig = Field(default_factory=ReviewConfig)
     llm: LLMConfig
 
     @classmethod
-    def from_yaml(cls, path: str | Path = DEFAULT_CONFIG_PATH) -> "Config":
+    def from_yaml(cls, path: str | Path = DEFAULT_CONFIG_PATH) -> "ThemisConfig":
         with open(path, "r") as f:
             config = cls(**yaml.safe_load(f))
         if not config.review.modules:

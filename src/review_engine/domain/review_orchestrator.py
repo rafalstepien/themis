@@ -52,6 +52,7 @@ class ReviewOrchestrator:
         self._log_loaded_context(modules, analysis_context)
         review = self.llm_port.generate_code_review(mr, analysis_context)
 
+        # TODO: Add POST for cohorts with nice formatting
         for comment in review.comments:
             self.gitlab_port.post_comment(comment)
 

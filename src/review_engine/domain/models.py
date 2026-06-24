@@ -109,16 +109,13 @@ class MergeRequest:  # Aggregate Root
         return True
 
     def affected_modules(self, config: ReviewConfig) -> list[str]:
-        """Modules touched by this MR, restricted to those declared in config.
+        """
+        Identifies which modules are affected in this Merge Request.
+        Restricted to those declared in config.
 
         Example: if the MR introduces changes in src/payments and src/logger
         then this method outputs ["src/payments", "src/logger"].
 
-        Both ``new_path`` and ``old_path`` are considered so deletions (whose
-        new side is a sentinel) resolve via the old path and cross-module moves
-        are attributed to both source and destination modules. The result is
-        deduplicated and returned in config-declaration order, making it
-        deterministic regardless of file ordering.
         """
         matched = set()
         for file in self.files:
@@ -130,13 +127,15 @@ class MergeRequest:  # Aggregate Root
 
 
 def _longest_module_match(path: str, modules: list[str]) -> str | None:
-    """Return the most specific declared module that contains ``path``.
+    """Return the most specific declared module that contains provided `path`.
 
-    A path belongs to a module when it equals the module path or sits beneath
-    it. When declarations overlap (e.g. ``src`` and ``src/orders``)
-    the longest match wins, so a file is attributed to the most specific module.
-    Sentinel paths (empty or ``/dev/null``, used by GitLab for the missing side
-    of an addition or deletion) match nothing.
+    Example:
+    For such input
+        - path="src/modules/payments/dto/file.py"
+        - modules=["src", "src/modules", "src/modules/payments",  "src/modules/orders"]
+
+    Function returns "src/modules/payments" as this is the most specifically defined
+    module that matches the path.
     """
     if path in _SENTINEL_PATHS:
         return None

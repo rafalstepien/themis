@@ -2,28 +2,50 @@
 Getting high-signal, contextual feedback directly inside a GitLab Merge Request without the code leaving user's infrastructure.
 
 ## Implementation phases
+
 ### (✅ done) Phase 1: The Core Pipeline (`0.1.0`)
-
-### Phase 2: High-Signal & Precision (`1.0.0`)
 #### Implementation
-- [ ] Implement Tree-sitter to chunk changed files into logical code blocks and provide more context for engine
-- [ ] Linter Noise Filtering: write a parser for local configuration files and feed the rules into the LLM system prompt with instruction "if you catch it, ignore it"
-- [ ] Post Cohorts and Business Requirements as top-level comments 
-#### Testing
-- [ ] AST Parser tests (unit). Create a folder with "fixture" code files, and write unit tests that feed these files into the tree-sitter engine and assert that it correctly identifies the exact byte-ofsets and logical blocks
-- [ ] Linter filter test (unit). Feed your engine a dummy .eslintrc.json file and a sample string of linter rules. Assert that your system prompt compiler accurately parses it and creates instructions telling the LLM to ignore those stylistic choices.
-- [ ] JSON Schema Defense (Unit): Write tests for the function that handles the raw LLM response. Feed it malformed JSON, truncated text, or missing fields, and verify your engine handles the error gracefully without crashing the whole pipeline.
+- [x] Fetch MR diff, identify affected modules, load per-module rules + architecture
+- [x] Ask the LLM for a review and post free-standing comments back to the MR
 
+**Capability:** Given a GitLab MR, Themis produces a real, context-aware code review from the plain diff and posts it back as comments — running entirely on the user's own runners, without the code leaving their infrastructure, and without crashing.
 
-### Phase 3: Refinement and making it better (`1.1.0+`)
+---
+
+### Phase 2: Finish the Pipeline (`0.2.0`)
+*Theme: stop discarding what the engine already computes, and plug in what's built but disconnected.*
 #### Implementation
-- [ ] Build the tool that crawls historical MRs, analyzes discussions and auto-generates rules.json and architecture.json files in the repo
-- [ ] Issues sync: pull description and comments from Jira to create Ticket Requirements Verification Matrix
-- [ ] `/dismiss` feedback loop: setup the webhook listener to intercept `/dismiss` comments on GitLab MRs, trigger a lightweight pipeline job, and commit updated exceptons to `rules.json`
-- [ ] MR Description Mutation: move the cohorts from comments to MR description
-#### Testing
-- [ ] Indexer Snapshots (Functional): Run your Async Indexer against your test GitLab repository's history. Instead of manually verifying the output every time, use snapshot testing: compare the newly generated rules.json against a known "good" baseline file. If they match, the indexer works.
-- [ ] Webhook Payload Simulation (Integration): You don't need to manually type /dismiss in GitLab to test the learning loop every time. Capture a real webhook JSON payload from GitLab once, save it locally, and write a script to HTTP POST that exact payload directly to your local engine or trigger API to verify it kicks off the rules.json update job
+- [ ] Inline comments: anchor each review comment to its changed line (from diff hunks) and post via the GitLab position API instead of as free-standing comments
+- [ ] Post Cohorts and as a top-level summary comment (reading guide)
+- [ ] Wire technology detection (from `pyproject.toml` / file extensions) so per-technology best-practices context loads
+- [ ] Linter Noise Filtering: parse local linter config (e.g. `[tool.ruff]`, `.eslintrc.json`) and instruct the LLM to stay silent on anything the linter already covers
+- [ ] Enforce a per-file change-size limit in `should_be_reviewed` (skip oversized/generated files)
+
+**Capability:** Themis leaves inline comments on the exact changed lines, opens with a cohort-based reading guide, pulls in technology best-practices, and stays quiet on anything a linter already flags. Nothing the engine computes is silently dropped.
+
+---
+
+### Phase 3: High-Signal & Precision (`1.0.0`)
+*Theme: better context in, fewer false positives out.*
+#### Implementation
+- [ ] Tree-sitter chunking: map the diff against logical code blocks, send whole changed units (not bare hunks) with precise line anchors for context and inline placement
+- [ ] False-positive gate: a self-critique pass that re-checks each proposed comment against the full file and drops the ones it can't substantiate
+- [ ] Harden LLM-response handling: malformed, truncated, or missing-field responses degrade gracefully instead of failing the pipeline
+
+**Capability:** Themis reasons over complete logical code units rather than raw hunks, places comments precisely, and filters its own output so what lands in the MR is trustworthy enough that a reviewer rarely has to dismiss a comment as wrong.
+
+---
+
+### Phase 4: Learning & Refinement (`1.1.0+`)
+*Theme: the system learns from history and from reviewer feedback.*
+#### Implementation
+- [ ] Indexer: crawl historical MRs, analyze discussions, and auto-generate `rules.json` and `architecture.json` in the repo
+- [ ] `/dismiss` feedback loop: webhook listener intercepts `/dismiss` comments, triggers a lightweight job, and commits the new exception into `rules.json`
+- [ ] MR Description Mutation: move cohorts from a comment into the MR description
+- [ ] Agentic context retrieval: let the LLM request related files, bounded to the module tree / `public.py` surfaces, to deepen architectural findings
+- [ ] Multi-language grammar support for chunking beyond Python
+
+**Capability:** Themis bootstraps its own rules and architecture context from a repo's past MRs, gets sharper every time a reviewer dismisses a comment, and can pull in related code on demand to ground deeper architectural findings — across more than one language.
 
 ## Measuring adoption
 - DockerHub pulls: tracking unique image download trends

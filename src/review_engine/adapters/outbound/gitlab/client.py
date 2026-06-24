@@ -27,11 +27,13 @@ class GitLabClient(GitLabPort):
 
     def get_mr_data(self) -> MergeRequest:
         """
-        Fetch merge request data including all file changes from GitLab API
-        and return domain object.
+        First fetch merge request data.
+        Then update the DTO with the file versions from both branches
+        (couldn't do it in single request)
         """
         mr_data = self._get_mr_data()
 
+        # TODO: Use asyncio.gather to paralellize
         for change in mr_data.changes:
             old_content = self._get_branch_file_content(change.old_path, mr_data.target_branch)
             new_content = self._get_branch_file_content(change.new_path, mr_data.source_branch)

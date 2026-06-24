@@ -14,8 +14,7 @@
 ## Architecture
 - Raise Low, Catch High: Deep low-level components (such as a database query executor or a HTTP network fetcher) must not handle execution errors by fallback defaults or printing messages. They must raise descriptive, domain-specific exceptions up the execution stack. Catching and logging exceptions should be deferred to the edges of the application layer (such as API routers, background workers, or CLI interfaces)
 - Preserve Traceback Context: When translating a lower-level exception into a domain-specific error, chain exceptions using the `from` keyword.
-- domain layer contains business logic
-- controllers only orchestrate
+- domain layer contains business logic, controllers only orchestrate
 - Follow the principles of Hexagonal App design (Ports and Adapters):
     - Define domain models, business rules and use cases in the core "domain" layer
     - Define ports (interfaces) that explain how to interact with core. Driving (inbound) ports that allow the outside world to call into the core. Driven (outbound) ports that the core uses to talk to the outside world.

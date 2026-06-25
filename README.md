@@ -147,7 +147,7 @@ A **hosted provider** (Groq, Together, Fireworks, OpenRouter, …) gives you ope
 ```yaml
 llm:
   provider: openai_compatible
-  model: llama-3.3-70b-versatile
+  model: qwen/qwen3.6-27b
   base_url: https://api.groq.com/openai/v1   # set LLM_API_TOKEN to your key
 ```
 
@@ -160,7 +160,13 @@ llm:
   base_url: http://your-host:8000/v1
 ```
 
-> Pick a model that supports structured outputs (Themis asks for a strict JSON schema).
+**Gemini and Anthropic** are reachable the same way as a shortcut — use `provider: gemini` or `provider: anthropic` (`base_url` defaults to the vendor's endpoint) and put your vendor key in `LLM_API_TOKEN`:
+
+```yaml
+llm:
+  provider: gemini          # or: anthropic
+  model: gemini-2.5-flash-lite   # e.g. claude-haiku-4-5 for anthropic
+```
 
 ## Contributing
 

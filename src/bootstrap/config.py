@@ -10,6 +10,10 @@ logger = logging.getLogger(__name__)
 THEMIS_DIR = ".themis-ai"
 DEFAULT_CONFIG_PATH = f"{THEMIS_DIR}/config.yaml"
 
+# Vendors reachable through their OpenAI-compatible endpoints.
+GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+ANTHROPIC_OPENAI_BASE_URL = "https://api.anthropic.com/v1/"
+
 RULES_SUBDIR = "rules"
 RULES_FILENAME = "rule.json"
 ARCHITECTURE_SUBDIR = "architecture"

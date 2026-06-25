@@ -1,5 +1,15 @@
+from unittest.mock import Mock, patch
+
+import pytest
+
 from src.review_engine.adapters.outbound.gitlab.client import GitLabClient
-from src.review_engine.domain.models import Reference, ReferenceKind, ReviewComment
+from src.review_engine.domain.models import (
+    CommentAnchor,
+    DiffRefs,
+    Reference,
+    ReferenceKind,
+    ReviewComment,
+)
 
 
 def test_format_body_without_references_is_just_content():
@@ -43,3 +53,68 @@ def test_format_body_renders_architecture_reference_as_file_path_only():
         "**References:**\n"
         "- `.themis-ai/architecture/orders/architecture.json`"
     )
+
+
+def _client() -> GitLabClient:
+    return GitLabClient(token="tok", project_id="42", mr_iid=7)
+
+
+@patch("src.review_engine.adapters.outbound.gitlab.client.httpx.post")
+def test_post_general_comment_posts_to_notes_endpoint(mock_post):
+    mock_post.return_value = Mock()
+
+    _client().post_general_comment(ReviewComment(content="a finding", references=[]))
+
+    url = mock_post.call_args.args[0]
+    assert url.endswith("/projects/42/merge_requests/7/notes")
+    assert mock_post.call_args.kwargs["json"] == {"body": "a finding"}
+
+
+@patch("src.review_engine.adapters.outbound.gitlab.client.httpx.post")
+def test_post_inline_comment_builds_position_for_added_line(mock_post):
+    mock_post.return_value = Mock()
+    comment = ReviewComment(
+        content="float price",
+        references=[],
+        anchor=CommentAnchor(new_path="a.py", old_path="a.py", new_line=11, old_line=None),
+    )
+    diff_refs = DiffRefs(base_sha="base", start_sha="start", head_sha="head")
+
+    _client().post_inline_comment(comment, diff_refs)
+
+    url = mock_post.call_args.args[0]
+    assert url.endswith("/projects/42/merge_requests/7/discussions")
+    payload = mock_post.call_args.kwargs["json"]
+    assert payload["body"] == "float price"
+    assert payload["position"] == {
+        "position_type": "text",
+        "base_sha": "base",
+        "start_sha": "start",
+        "head_sha": "head",
+        "new_path": "a.py",
+        "old_path": "a.py",
+        "new_line": 11,
+    }
+
+
+@patch("src.review_engine.adapters.outbound.gitlab.client.httpx.post")
+def test_post_inline_comment_includes_old_line_for_context_line(mock_post):
+    mock_post.return_value = Mock()
+    comment = ReviewComment(
+        content="context",
+        references=[],
+        anchor=CommentAnchor(new_path="a.py", old_path="a.py", new_line=10, old_line=10),
+    )
+
+    _client().post_inline_comment(comment, DiffRefs("base", "start", "head"))
+
+    position = mock_post.call_args.kwargs["json"]["position"]
+    assert position["new_line"] == 10
+    assert position["old_line"] == 10
+
+
+def test_post_inline_comment_requires_anchor():
+    comment = ReviewComment(content="no anchor", references=[])
+
+    with pytest.raises(ValueError):
+        _client().post_inline_comment(comment, DiffRefs("base", "start", "head"))

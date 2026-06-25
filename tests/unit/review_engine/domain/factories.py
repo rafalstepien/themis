@@ -4,9 +4,30 @@ from src.review_engine.domain.models import (
     ChangedFile,
     CodeReview,
     Cohort,
+    CommentAnchor,
+    DiffRefs,
     MergeRequest,
     ReviewComment,
 )
+
+
+class DiffRefsFactory(factory.Factory[DiffRefs]):
+    class Meta:
+        model = DiffRefs
+
+    base_sha = "base-sha"
+    start_sha = "start-sha"
+    head_sha = "head-sha"
+
+
+class CommentAnchorFactory(factory.Factory[CommentAnchor]):
+    class Meta:
+        model = CommentAnchor
+
+    new_path = "new-path"
+    old_path = "old-path"
+    new_line = 11
+    old_line = None
 
 
 class ChangedFileFactory(factory.Factory[ChangedFile]):

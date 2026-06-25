@@ -22,6 +22,7 @@ class OpenAIClient(LLMPort):
         dto = self._request_review(mr, context)
         return to_domain(
             dto,
+            mr,
             rule_modules=set(context.past_mr_rules or {}),
             architecture_modules=set(context.architecture_rules or {}),
         )

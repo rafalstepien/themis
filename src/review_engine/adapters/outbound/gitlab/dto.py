@@ -18,6 +18,14 @@ class FileDiffDTO(BaseModel):
         self.old_content = old_content
 
 
+class DiffRefsDTO(BaseModel):
+    """The commit SHAs GitLab resolves an inline comment's position against."""
+
+    base_sha: str
+    start_sha: str
+    head_sha: str
+
+
 class MergeRequestDTO(BaseModel):
     """Represents complete merge request data from GitLab API."""
 
@@ -29,6 +37,7 @@ class MergeRequestDTO(BaseModel):
     source_branch: str
     target_branch: str
     changes: list[FileDiffDTO]
+    diff_refs: DiffRefsDTO | None = None
 
 
 class GitLabFileResponse(BaseModel):

@@ -4,7 +4,7 @@ from urllib.parse import quote
 
 import httpx
 
-from src.review_engine.domain.models import MergeRequest, ReviewComment
+from src.review_engine.domain.models import CommentAnchor, DiffRefs, MergeRequest, ReviewComment
 from src.review_engine.ports.outbound import GitLabPort
 
 from .dto import (
@@ -70,7 +70,7 @@ class GitLabClient(GitLabPort):
             return base64.b64decode(data.content).decode("utf-8")
         return data.content
 
-    def post_comment(self, comment: ReviewComment) -> None:
+    def post_general_comment(self, comment: ReviewComment) -> None:
         """Post a review comment as a general note on the merge request."""
         body = self._format_body(comment)
         if not body.strip():
@@ -83,6 +83,48 @@ class GitLabClient(GitLabPort):
         with handle_gitlab_api_errors(self.mr_iid):
             response = httpx.post(url, headers=self.headers, json={"body": body})
             response.raise_for_status()
+
+    def post_inline_comment(self, comment: ReviewComment, diff_refs: DiffRefs) -> None:
+        """Post a review comment inline at ``comment.anchor`` via the discussions API."""
+        if comment.anchor is None:
+            raise ValueError("post_inline_comment requires comment.anchor to be set")
+
+        body = self._format_body(comment)
+        if not body.strip():
+            logger.warning("Skipping empty review comment for MR %s", self.mr_iid)
+            return
+
+        url = (
+            f"{self.BASE_API_URL}/projects/{self.project_id}"
+            f"/merge_requests/{self.mr_iid}/discussions"
+        )
+        payload = {"body": body, "position": self._build_position(comment.anchor, diff_refs)}
+
+        with handle_gitlab_api_errors(self.mr_iid):
+            response = httpx.post(url, headers=self.headers, json=payload)
+            response.raise_for_status()
+
+    @staticmethod
+    def _build_position(anchor: CommentAnchor, diff_refs: DiffRefs) -> dict:
+        """Build the GitLab text-position payload, omitting the line that doesn't apply.
+
+        An added line carries only ``new_line``; a context line carries both.
+        GitLab rejects a position that sends a line number which isn't on that
+        side of the diff, so the ``None`` side is left out entirely.
+        """
+        position: dict[str, str | int] = {
+            "position_type": "text",
+            "base_sha": diff_refs.base_sha,
+            "start_sha": diff_refs.start_sha,
+            "head_sha": diff_refs.head_sha,
+            "new_path": anchor.new_path,
+            "old_path": anchor.old_path,
+        }
+        if anchor.new_line is not None:
+            position["new_line"] = anchor.new_line
+        if anchor.old_line is not None:
+            position["old_line"] = anchor.old_line
+        return position
 
     @staticmethod
     def _format_body(comment: ReviewComment) -> str:

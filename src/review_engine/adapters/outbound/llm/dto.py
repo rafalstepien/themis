@@ -23,6 +23,12 @@ class ReferenceDTO(BaseModel):
 class CommentDTO(BaseModel):
     content: str
     references: list[ReferenceDTO]
+    file_path: str | None = None
+    """New-file path of the change the comment is about, copied from its
+    ``change_id`` header. ``None`` when the comment is not tied to one file."""
+    line: int | None = None
+    """New-file line number (the left-gutter number in the annotated diff) the
+    comment anchors to. ``None`` when no single line applies."""
 
 
 class BusinessRequirementDTO(BaseModel):

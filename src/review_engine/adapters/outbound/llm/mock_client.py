@@ -20,4 +20,4 @@ class MockLLMClient(LLMPort):
                 CommentDTO(content="Dummy review comment.", references=[]),
             ],
         )
-        return to_domain(dto)
+        return to_domain(dto, mr)

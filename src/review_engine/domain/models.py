@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 
 from src.bootstrap.config import (
@@ -21,6 +21,13 @@ class AnalysisContext:
 
 
 _SENTINEL_PATHS = {"", "/dev/null"}
+
+
+@dataclass(frozen=True, slots=True)
+class DiffRefs:
+    base_sha: str
+    start_sha: str
+    head_sha: str
 
 
 class ChangeType(StrEnum):
@@ -67,6 +74,7 @@ class MergeRequest:  # Aggregate Root
     title: str
     description: str
     files: list[ChangedFile]
+    diff_refs: DiffRefs | None = None
 
     @classmethod
     def create(
@@ -77,6 +85,7 @@ class MergeRequest:  # Aggregate Root
         title: str,
         description: str,
         files: list[ChangedFile],
+        diff_refs: DiffRefs | None = None,
     ) -> "MergeRequest":
         if not mr_id:
             raise ValueError("id cannot be empty")
@@ -91,6 +100,7 @@ class MergeRequest:  # Aggregate Root
             title=title,
             description=description,
             files=files,
+            diff_refs=diff_refs,
         )
 
     def should_be_reviewed(self, config: ReviewConfig) -> bool:
@@ -177,10 +187,29 @@ class Reference:
 
 
 @dataclass(frozen=True, slots=True)
+class CommentAnchor:
+    """The position an inline comment is pinned to within a changed file.
+
+    ``new_line`` is the line's number in the new file (set for added and
+    context lines); ``old_line`` its number in the old file (set for context
+    lines). Both paths are always carried because GitLab's position payload
+    requires them even when only one line number applies.
+    """
+
+    new_path: str
+    old_path: str
+    new_line: int | None = None
+    old_line: int | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class ReviewComment:
     content: str
     references: list[Reference]
-    # TODO Phase 2 (Milestone 2): add file path + line anchor from Tree-sitter offsets
+    anchor: CommentAnchor | None = field(
+        default=None,
+        doc="When set, the comment is posted inline at ``anchor``; otherwise it is posted as a general MR note.",
+    )
 
 
 @dataclass(frozen=True, slots=True)

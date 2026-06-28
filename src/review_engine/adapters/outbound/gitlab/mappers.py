@@ -1,6 +1,6 @@
-from src.review_engine.domain.models import ChangedFile, MergeRequest
+from src.review_engine.domain.models import ChangedFile, DiffRefs, MergeRequest
 
-from .dto import MergeRequestDTO
+from .dto import DiffRefsDTO, MergeRequestDTO
 
 
 def to_domain(dto: MergeRequestDTO) -> MergeRequest:
@@ -21,4 +21,11 @@ def to_domain(dto: MergeRequestDTO) -> MergeRequest:
             )
             for c_id, c in enumerate(dto.changes, 1)
         ],
+        diff_refs=_to_diff_refs(dto.diff_refs),
     )
+
+
+def _to_diff_refs(dto: DiffRefsDTO | None) -> DiffRefs | None:
+    if dto is None:
+        return None
+    return DiffRefs(base_sha=dto.base_sha, start_sha=dto.start_sha, head_sha=dto.head_sha)

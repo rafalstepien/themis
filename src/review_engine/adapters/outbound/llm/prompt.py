@@ -10,7 +10,14 @@ model is told to leave it empty.
 
 import json
 
+from src.review_engine.domain.diff_hunks import DiffLineKind, parse_diff
 from src.review_engine.domain.models import AnalysisContext, MergeRequest
+
+_LINE_MARKERS = {
+    DiffLineKind.ADDED: "+",
+    DiffLineKind.REMOVED: "-",
+    DiffLineKind.CONTEXT: " ",
+}
 
 _SYSTEM_PROMPT_BASE = """\
 You are a Senior Staff Software Engineer performing a code review of a merge request.
@@ -33,6 +40,7 @@ Notes:
 - The `overview` per file must describe what happened in that file, not repeat the cohort \
 description.
 - Omit code_review_comments from the JSON if there are none (use an empty list).
+- Use correct markdown formatting for comment content
 
 ---
 
@@ -95,6 +103,18 @@ Each comment must, in its `content`:
 - Cite its grounding in `references` when the problem violates a rule or \
 architecture contract you were given (see "references" below)
 
+**Anchoring (`file_path` + `line`).** Pin each comment to the exact changed line \
+it is about so it can be posted inline:
+- Set `file_path` to that file's path exactly as shown in its `[change_id=...]` header.
+- Set `line` to the number in the left gutter of the offending line in the \
+annotated diff. Gutter numbers are new-file line numbers; only added (`+`) and \
+context (` `) lines have one. Copy the number — do not count or guess.
+- A removed (`-`) line has no gutter number; if the problem is fundamentally \
+about a deletion (no nearby added/context line captures it), leave `file_path` \
+and `line` as null and it will be posted as a general comment.
+- Anchor to the most relevant single line. If a comment spans a file rather than \
+a line, leave both null.
+
 **One comment per problem.** Each distinct problem gets exactly ONE comment. Do \
 NOT file several comments describing the same underlying issue from different \
 angles — consolidate them into a single comment that names the root cause. Two \
@@ -123,13 +143,17 @@ return an empty `references` list for that comment.
 **Good comment example (architecture violation):**
 {
   "content": "`orders/domain/services.py` imports and instantiates `CatalogService` directly, creating a hard dependency from the orders domain into catalog and bypassing the outbound ports and anti-corruption layer. Reserve stock through an injected port realized by a catalog gateway adapter instead.",
-  "references": [ { "kind": "architecture", "module": "orders" } ]
+  "references": [ { "kind": "architecture", "module": "orders" } ],
+  "file_path": "src/orders/domain/services.py",
+  "line": 42
 }
 
 **Good comment example (rule violation):**
 {
   "content": "`price` is held as a float here; currency arithmetic on floats accumulates rounding errors in totals and tax. Use the shared Money value object (integer minor units).",
-  "references": [ { "kind": "rule", "module": "catalog", "rule": "Represent money as integer minor units, never as float." } ]
+  "references": [ { "kind": "rule", "module": "catalog", "rule": "Represent money as integer minor units, never as float." } ],
+  "file_path": "src/catalog/domain/pricing.py",
+  "line": 17
 }
 
 **Bad comment example (do NOT produce):**
@@ -183,8 +207,26 @@ def build_user_prompt(mr: MergeRequest, context: AnalysisContext) -> str:
 def _format_files(mr: MergeRequest) -> str:
     blocks: list[str] = []
     for f in mr.files:
-        blocks.append(f"## [change_id={f.change_id}] {f.new_path}\n```diff\n{f.raw_diff}\n```")
+        blocks.append(
+            f"## [change_id={f.change_id}] {f.new_path}\n"
+            "Left gutter = new-file line number (cite it as `line`).\n"
+            f"```\n{_annotate_diff(f.raw_diff)}\n```"
+        )
     return "\n\n".join(blocks)
+
+
+def _annotate_diff(raw_diff: str) -> str:
+    """Render a unified diff with a new-file line-number gutter on each line.
+
+    The gutter gives the model a number to copy into a comment's ``line``
+    instead of counting hunk offsets itself. Added/context lines show their
+    new-file number; removed lines show none (they cannot be anchored).
+    """
+    rendered: list[str] = []
+    for line in parse_diff(raw_diff):
+        gutter = "" if line.new_line is None else str(line.new_line)
+        rendered.append(f"{gutter:>5} {_LINE_MARKERS[line.kind]}{line.content}")
+    return "\n".join(rendered)
 
 
 def _format_architecture(architecture: dict) -> str:

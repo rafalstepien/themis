@@ -54,7 +54,10 @@ class ReviewOrchestrator:
 
         # TODO: Add POST for cohorts with nice formatting
         for comment in review.comments:
-            self.gitlab_port.post_comment(comment)
+            if comment.anchor is not None and mr.diff_refs is not None:
+                self.gitlab_port.post_inline_comment(comment, mr.diff_refs)
+            else:
+                self.gitlab_port.post_general_comment(comment)
 
     def _get_technologies(self) -> list:
         return list()

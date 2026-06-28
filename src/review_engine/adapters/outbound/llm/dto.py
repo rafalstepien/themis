@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class CohortChangeDTO(BaseModel):
@@ -23,6 +23,14 @@ class ReferenceDTO(BaseModel):
 class CommentDTO(BaseModel):
     content: str
     references: list[ReferenceDTO]
+    file_path: str | None = Field(
+        description="New-file path of the change the comment is about, copied from its `change_id` header. `None` when the comment is not tied to one file.",
+        default=None,
+    )
+    line: int | None = Field(
+        description="New-file line number (the left-gutter number in the annotated diff) the comment anchors to. `None` when no single line applies.",
+        default=None,
+    )
 
 
 class BusinessRequirementDTO(BaseModel):

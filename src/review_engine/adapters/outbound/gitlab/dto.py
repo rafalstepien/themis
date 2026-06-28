@@ -19,7 +19,10 @@ class FileDiffDTO(BaseModel):
 
 
 class DiffRefsDTO(BaseModel):
-    """The commit SHAs GitLab resolves an inline comment's position against."""
+    """
+    The commit SHAs GitLab resolves an inline comment's position against.
+    For explanation see docs/commit-sha.md
+    """
 
     base_sha: str
     start_sha: str

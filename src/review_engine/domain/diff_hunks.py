@@ -53,10 +53,10 @@ def parse_diff(raw_diff: str) -> list[DiffLine]:
     in_hunk = False
 
     for raw in raw_diff.splitlines():
-        header = _HUNK_HEADER.match(raw)
-        if header:
-            old_line = int(header.group(1))
-            new_line = int(header.group(2))
+        is_header = _HUNK_HEADER.match(raw)
+        if is_header:
+            old_line = int(is_header.group(1))
+            new_line = int(is_header.group(2))
             in_hunk = True
             continue
 

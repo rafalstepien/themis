@@ -11,10 +11,8 @@ class GitLabPort(ABC):
 
     @abstractmethod
     def post_general_comment(self, comment: ReviewComment) -> None:
-        """Post a comment as a general note on the merge request (no line anchor).
-
-        Used for findings that do not pin to a single line, and later for
-        MR-level summaries such as cohorts.
+        """
+        Post a comment as a general note on the merge request (no line anchor).
         """
         ...
 

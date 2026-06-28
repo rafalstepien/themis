@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 
 from src.bootstrap.config import (
@@ -25,13 +25,6 @@ _SENTINEL_PATHS = {"", "/dev/null"}
 
 @dataclass(frozen=True, slots=True)
 class DiffRefs:
-    """The commit SHAs an inline comment's position is resolved against.
-
-    GitLab's discussion position API requires all three: ``base_sha`` and
-    ``head_sha`` bound the diff, and ``start_sha`` pins the comparison's
-    starting point. Sourced from the merge request's ``diff_refs``.
-    """
-
     base_sha: str
     start_sha: str
     head_sha: str
@@ -213,9 +206,10 @@ class CommentAnchor:
 class ReviewComment:
     content: str
     references: list[Reference]
-    anchor: CommentAnchor | None = None
-    """When set, the comment is posted inline at ``anchor``; otherwise it is
-    posted as a general MR note."""
+    anchor: CommentAnchor | None = field(
+        default=None,
+        doc="When set, the comment is posted inline at ``anchor``; otherwise it is posted as a general MR note.",
+    )
 
 
 @dataclass(frozen=True, slots=True)

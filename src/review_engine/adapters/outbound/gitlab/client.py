@@ -85,7 +85,7 @@ class GitLabClient(GitLabPort):
             response.raise_for_status()
 
     def post_inline_comment(self, comment: ReviewComment, diff_refs: DiffRefs) -> None:
-        """Post a review comment inline at ``comment.anchor`` via the discussions API."""
+        """Post a review comment anchored to specific line"""
         if comment.anchor is None:
             raise ValueError("post_inline_comment requires comment.anchor to be set")
 

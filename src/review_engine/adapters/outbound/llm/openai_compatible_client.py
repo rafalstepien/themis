@@ -32,7 +32,8 @@ class OpenAICompatibleClient(LLMPort):
     def generate_code_review(self, mr: MergeRequest, context: AnalysisContext) -> CodeReview:
         dto = self._request_review(mr, context)
         return to_domain(
-            dto,
+            dto=dto,
+            mr=mr,
             rule_modules=set(context.past_mr_rules or {}),
             architecture_modules=set(context.architecture_rules or {}),
         )

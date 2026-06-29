@@ -10,13 +10,26 @@ the same request shape (a `messages` array of `{role, content}` objects), and th
 shape (`choices[0].message...`). Because the contract is identical, the official OpenAI SDK can talk
 to that server unchanged; you only swap the `base_url`.
 
-This is why a single `OpenAICompatibleClient` can reach vLLM, Groq, Gemini, and Anthropic alike.
-It cares only about the contract, not about who runs the model behind it.
+This is why a single `OpenAICompatibleClient` can reach OpenAI, vLLM, Groq, Gemini, and Anthropic
+alike. It cares only about the contract, not about who runs the model behind it.
 
-> One exception lives inside Themis itself: the dedicated `openai` provider uses OpenAI's newer,
-> proprietary **Responses API** (`/v1/responses`), which only OpenAI implements. Every other provider
-> routes through the **Chat Completions API**, which every compatible server exposes. That single API
-> difference is the reason there are two client classes.
+> **One client, one protocol.** Themis has exactly one LLM client and routes every provider —
+> OpenAI included — through the **Chat Completions API** (`/v1/chat/completions`), which every
+> compatible server exposes. There are no vendor shortcuts and no built-in default URLs: you always
+> set `base_url` explicitly, and you tell Themis who runs the server with `deployment_type`.
+
+## You configure exactly two things
+
+A backend is fully described by two keys:
+
+| Key | What it answers | Values |
+|---|---|---|
+| `base_url` | *Where* the OpenAI-compatible endpoint lives | any routable URL — **always required** |
+| `deployment_type` | *Who* runs it (decides whether a token is required) | `cloud` or `self_hosted` |
+
+- `deployment_type: cloud` — a vendor/hosted endpoint. An API key (`LLM_API_TOKEN`) is **always
+  required**; Themis fails fast if it is missing.
+- `deployment_type: self_hosted` — you run the server. A key is **optional** (see the keyless caveat).
 
 ## Two layers, kept separate
 
@@ -40,7 +53,7 @@ and own the whole thing.
 
 ```yaml
 llm:
-  provider: openai_compatible
+  deployment_type: self_hosted
   model: <model-name>
   base_url: http://your-host:8000/v1
 ```
@@ -56,7 +69,7 @@ and give you an OpenAI-compatible endpoint. You deploy nothing — just point at
 
 ```yaml
 llm:
-  provider: openai_compatible
+  deployment_type: cloud
   model: qwen/qwen3-32b
   base_url: https://api.groq.com/openai/v1   # set LLM_API_TOKEN to your key
 ```
@@ -67,22 +80,19 @@ llm:
 ### 3. Closed cloud models (OpenAI, Gemini, Anthropic)
 
 These models' weights are private — you **cannot** deploy them. The vendor runs them and offers an
-API. OpenAI uses its own Responses API; Gemini and Anthropic additionally expose an OpenAI-compatible
-endpoint as a convenience door.
+OpenAI-compatible endpoint. Point `base_url` at that endpoint and mark it `cloud`:
 
 ```yaml
 llm:
-  provider: openai            # OpenAI's native Responses API
-
-llm:
-  provider: gemini            # or: anthropic
-  model: gemini-2.5-flash-lite   # base_url defaults to the vendor's endpoint
+  deployment_type: cloud
+  model: gpt-5-nano
+  base_url: https://api.openai.com/v1
+  # Gemini:    https://generativelanguage.googleapis.com/v1beta/openai/
+  # Anthropic: https://api.anthropic.com/v1/
 ```
 
-For `gemini` and `anthropic`, Themis ships the vendor's OpenAI-compatible `base_url` as a default, so
-you don't have to type it. You can still override `base_url` (e.g. to route through a proxy).
-
-- **Auth:** always required (your vendor key).
+- **Auth:** always required (your vendor key). A `cloud` backend fails fast if `LLM_API_TOKEN` is
+  unset — keyless is only allowed for a `self_hosted` deployment.
 - **Reachability:** public endpoint, reachable from any runner.
 
 ## The keyless caveat (read this before going keyless)
@@ -103,10 +113,13 @@ runner reaches it over a private/trusted network:
 
 ## Quick reference
 
-| Backend | `provider` | `base_url` | `LLM_API_TOKEN` | API used |
-|---|---|---|---|---|
-| OpenAI | `openai` | — | required | Responses |
-| Self-hosted (vLLM, …) | `openai_compatible` | **required** | optional | Chat Completions |
-| Hosted OSS (Groq, …) | `openai_compatible` | **required** | required | Chat Completions |
-| Gemini | `gemini` | default (overridable) | required | Chat Completions |
-| Anthropic | `anthropic` | default (overridable) | required | Chat Completions |
+Every row uses the same client and the same Chat Completions API; `base_url` is always required and
+`deployment_type` differs only in whether a token is mandatory.
+
+| Backend | `deployment_type` | `base_url` | `LLM_API_TOKEN` |
+|---|---|---|---|
+| OpenAI | `cloud` | **required** | required |
+| Self-hosted (vLLM, …) | `self_hosted` | **required** | optional |
+| Hosted OSS (Groq, …) | `cloud` | **required** | required |
+| Gemini | `cloud` | **required** | required |
+| Anthropic | `cloud` | **required** | required |

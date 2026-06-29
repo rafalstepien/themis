@@ -4,12 +4,7 @@ from pathlib import Path
 from pydantic import ValidationError
 import pytest
 
-from src.bootstrap.config import (
-    ANTHROPIC_OPENAI_BASE_URL,
-    OPENAI_BASE_URL,
-    LLMProvider,
-    ThemisConfig,
-)
+from src.bootstrap.config import LLMDeploymentType, ThemisConfig
 
 _FULL_CONFIG = """
 version: 1
@@ -23,23 +18,25 @@ review:
     - helpers/logging
 
 llm:
-  provider: anthropic
+  deployment_type: cloud
   model: claude-opus-4-8
+  base_url: https://api.anthropic.com/v1/
 """
 
 _CONFIG_WITHOUT_REVIEW = """
 version: 1
 
 llm:
-  provider: openai
+  deployment_type: cloud
   model: gpt-4o
+  base_url: https://api.openai.com/v1
 """
 
-_OPENAI_COMPATIBLE_CONFIG = """
+_SELF_HOSTED_CONFIG = """
 version: 1
 
 llm:
-  provider: openai_compatible
+  deployment_type: self_hosted
   model: qwen2.5-coder
   base_url: http://localhost:8000/v1
 """
@@ -62,10 +59,8 @@ def test_loads_full_config(tmp_path: Path) -> None:
         "src/engine",
         "helpers/logging",
     ]
-    # 'anthropic' is a vendor shortcut: it desugars to the single
-    # openai_compatible protocol with the vendor's default base_url.
-    assert config.llm.provider is LLMProvider.OPENAI_COMPATIBLE
-    assert config.llm.base_url == ANTHROPIC_OPENAI_BASE_URL
+    assert config.llm.deployment_type is LLMDeploymentType.CLOUD
+    assert config.llm.base_url == "https://api.anthropic.com/v1/"
     assert config.llm.model == "claude-opus-4-8"
 
 
@@ -79,8 +74,8 @@ def test_warns_when_no_modules_declared(tmp_path: Path, caplog: pytest.LogCaptur
     )
 
 
-def test_unknown_provider_is_rejected(tmp_path: Path) -> None:
-    body = _FULL_CONFIG.replace("provider: anthropic", "provider: bedrock")
+def test_unknown_deployment_type_is_rejected(tmp_path: Path) -> None:
+    body = _FULL_CONFIG.replace("deployment_type: cloud", "deployment_type: bedrock")
 
     with pytest.raises(ValidationError):
         ThemisConfig.from_yaml(_write_config(tmp_path, body))
@@ -90,6 +85,13 @@ def test_missing_required_key_is_rejected(tmp_path: Path) -> None:
     body = _FULL_CONFIG.replace("version: 1", "")
 
     with pytest.raises(ValidationError):
+        ThemisConfig.from_yaml(_write_config(tmp_path, body))
+
+
+def test_base_url_is_required(tmp_path: Path) -> None:
+    body = _FULL_CONFIG.replace("  base_url: https://api.anthropic.com/v1/\n", "")
+
+    with pytest.raises(ValidationError, match="base_url"):
         ThemisConfig.from_yaml(_write_config(tmp_path, body))
 
 
@@ -107,54 +109,13 @@ def test_custom_path_argument_is_honoured(tmp_path: Path) -> None:
     assert config.llm.model == "claude-opus-4-8"
 
 
-def test_openai_shortcut_desugars_to_compatible_with_default_base_url(tmp_path: Path) -> None:
-    config = ThemisConfig.from_yaml(_write_config(tmp_path, _CONFIG_WITHOUT_REVIEW))
-
-    assert config.llm.provider is LLMProvider.OPENAI_COMPATIBLE
-    assert config.llm.base_url == OPENAI_BASE_URL
-
-
-def test_vendor_shortcut_base_url_can_be_overridden(tmp_path: Path) -> None:
-    body = _FULL_CONFIG.replace(
-        "  model: claude-opus-4-8",
-        "  model: claude-opus-4-8\n  base_url: http://proxy:8080/v1",
-    )
-
-    config = ThemisConfig.from_yaml(_write_config(tmp_path, body))
-
-    assert config.llm.provider is LLMProvider.OPENAI_COMPATIBLE
-    assert config.llm.base_url == "http://proxy:8080/v1"
-
-
-def test_openai_compatible_provider_loads_base_url(tmp_path: Path) -> None:
-    config = ThemisConfig.from_yaml(_write_config(tmp_path, _OPENAI_COMPATIBLE_CONFIG))
-
-    assert config.llm.provider is LLMProvider.OPENAI_COMPATIBLE
-    assert config.llm.base_url == "http://localhost:8000/v1"
-
-
-def test_openai_compatible_provider_requires_base_url(tmp_path: Path) -> None:
-    body = _OPENAI_COMPATIBLE_CONFIG.replace("  base_url: http://localhost:8000/v1\n", "")
-
-    with pytest.raises(ValidationError, match="base_url"):
-        ThemisConfig.from_yaml(_write_config(tmp_path, body))
-
-
-def test_vendor_shortcut_requires_a_token(tmp_path: Path) -> None:
+def test_cloud_deployment_requires_a_token(tmp_path: Path) -> None:
     config = ThemisConfig.from_yaml(_write_config(tmp_path, _CONFIG_WITHOUT_REVIEW))
 
     assert config.llm.requires_token is True
 
 
-def test_explicit_self_host_is_keyless(tmp_path: Path) -> None:
-    config = ThemisConfig.from_yaml(_write_config(tmp_path, _OPENAI_COMPATIBLE_CONFIG))
-
-    assert config.llm.requires_token is False
-
-
-def test_requires_token_cannot_be_set_by_the_user(tmp_path: Path) -> None:
-    body = _OPENAI_COMPATIBLE_CONFIG + "  requires_token: true\n"
-
-    config = ThemisConfig.from_yaml(_write_config(tmp_path, body))
+def test_self_hosted_deployment_is_keyless(tmp_path: Path) -> None:
+    config = ThemisConfig.from_yaml(_write_config(tmp_path, _SELF_HOSTED_CONFIG))
 
     assert config.llm.requires_token is False

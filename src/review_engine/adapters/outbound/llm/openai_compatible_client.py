@@ -16,9 +16,8 @@ _PLACEHOLDER_API_KEY = "EMPTY"
 
 
 class OpenAICompatibleClient(_StructuredOutputLLMClient):
-    """Talks to any OpenAI-compatible server (self-hosted vLLM/LM Studio, or hosted OSS providers).
-
-    Defined as specialized client as it uses completions API and not standard responses API.
+    """
+    Talks to any OpenAI-compatible server (self-hosted vLLM/LM Studio, or hosted OSS providers).
     """
 
     def __init__(self, model: str, base_url: str, token: str | None = None):

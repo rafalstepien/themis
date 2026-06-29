@@ -11,6 +11,7 @@ THEMIS_DIR = ".themis-ai"
 DEFAULT_CONFIG_PATH = f"{THEMIS_DIR}/config.yaml"
 
 # Vendors reachable through their OpenAI-compatible endpoints.
+OPENAI_BASE_URL = "https://api.openai.com/v1"
 GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 ANTHROPIC_OPENAI_BASE_URL = "https://api.anthropic.com/v1/"
 

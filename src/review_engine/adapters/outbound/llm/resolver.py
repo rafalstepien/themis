@@ -1,17 +1,18 @@
 from src.bootstrap.config import (
     ANTHROPIC_OPENAI_BASE_URL,
     GEMINI_OPENAI_BASE_URL,
+    OPENAI_BASE_URL,
     LLMConfig,
     LLMProvider,
 )
 from src.review_engine.ports.outbound import LLMPort
 
 from .mock_client import MockLLMClient
-from .openai_client import OpenAIClient
 from .openai_compatible_client import OpenAICompatibleClient
 
 # Vendors served through OpenAICompatibleClient with a default base_url the user may override.
 _DEFAULT_OPENAI_COMPATIBLE_BASE_URLS = {
+    LLMProvider.OPENAI: OPENAI_BASE_URL,
     LLMProvider.GEMINI: GEMINI_OPENAI_BASE_URL,
     LLMProvider.ANTHROPIC: ANTHROPIC_OPENAI_BASE_URL,
 }
@@ -26,9 +27,12 @@ class LLMClientResolver:
             return MockLLMClient()
 
         match llm_config.provider:
-            case LLMProvider.OPENAI:
-                return OpenAIClient(model=llm_config.model, token=token)
-            case LLMProvider.OPENAI_COMPATIBLE | LLMProvider.GEMINI | LLMProvider.ANTHROPIC:
+            case (
+                LLMProvider.OPENAI
+                | LLMProvider.OPENAI_COMPATIBLE
+                | LLMProvider.GEMINI
+                | LLMProvider.ANTHROPIC
+            ):
                 base_url = llm_config.base_url or _DEFAULT_OPENAI_COMPATIBLE_BASE_URLS.get(
                     llm_config.provider
                 )

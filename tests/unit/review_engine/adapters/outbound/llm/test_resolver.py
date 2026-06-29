@@ -5,15 +5,15 @@ from src.review_engine.adapters.outbound.llm.resolver import LLMClientResolver
 
 
 def test_test_mode_returns_mock_client() -> None:
-    config = LLMConfig(provider=LLMProvider.OPENAI, model="gpt-4o")
+    config = LLMConfig(provider="openai", model="gpt-4o")
 
     client = LLMClientResolver.resolve(config, token="t", test_mode=True)
 
     assert isinstance(client, MockLLMClient)
 
 
-def test_resolves_openai_provider_through_openai_compatible_client() -> None:
-    config = LLMConfig(provider=LLMProvider.OPENAI, model="gpt-4o")
+def test_resolves_openai_shortcut_through_openai_compatible_client() -> None:
+    config = LLMConfig(provider="openai", model="gpt-4o")
 
     client = LLMClientResolver.resolve(config, token="t", test_mode=False)
 
@@ -35,7 +35,7 @@ def test_resolves_openai_compatible_with_configured_base_url() -> None:
 
 
 def test_resolves_gemini_through_openai_compatible_client() -> None:
-    config = LLMConfig(provider=LLMProvider.GEMINI, model="gemini-2.0-flash")
+    config = LLMConfig(provider="gemini", model="gemini-2.0-flash")
 
     client = LLMClientResolver.resolve(config, token="key", test_mode=False)
 
@@ -44,7 +44,7 @@ def test_resolves_gemini_through_openai_compatible_client() -> None:
 
 
 def test_resolves_anthropic_through_openai_compatible_client() -> None:
-    config = LLMConfig(provider=LLMProvider.ANTHROPIC, model="claude-3-5-haiku-latest")
+    config = LLMConfig(provider="anthropic", model="claude-3-5-haiku-latest")
 
     client = LLMClientResolver.resolve(config, token="key", test_mode=False)
 
@@ -54,7 +54,7 @@ def test_resolves_anthropic_through_openai_compatible_client() -> None:
 
 def test_default_vendor_base_url_can_be_overridden() -> None:
     config = LLMConfig(
-        provider=LLMProvider.GEMINI, model="gemini-2.0-flash", base_url="http://proxy:8080/v1"
+        provider="gemini", model="gemini-2.0-flash", base_url="http://proxy:8080/v1"
     )
 
     client = LLMClientResolver.resolve(config, token="key", test_mode=False)

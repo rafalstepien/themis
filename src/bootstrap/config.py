@@ -63,6 +63,11 @@ class LLMConfig(BaseModel):
     provider: LLMProvider
     model: str
     base_url: str | None = None
+    # Set by desugaring, not by the user: a vendor shortcut is a cloud backend
+    # and needs a key, whereas explicit 'openai_compatible' is the self-host
+    # path and may be keyless. The token rule is decided here on the user's
+    # original provider, before the shortcut collapses to openai_compatible.
+    requires_token: bool = False
 
     @model_validator(mode="before")
     @classmethod
@@ -71,15 +76,20 @@ class LLMConfig(BaseModel):
 
         ``openai`` / ``gemini`` / ``anthropic`` are convenience names: they map
         to ``openai_compatible`` plus the vendor's default ``base_url`` (which
-        the user may still override). Anything else is passed through untouched
-        for the enum to validate.
+        the user may still override) and are flagged as cloud (token required).
+        Anything else is passed through untouched for the enum to validate.
         """
         if not isinstance(data, dict):
             return data
 
+        data.pop("requires_token", None)  # internal flag, never user-supplied
         default_base_url = _VENDOR_SHORTCUT_BASE_URLS.get(data.get("provider"))
         if default_base_url is not None:
-            data = {**data, "provider": LLMProvider.OPENAI_COMPATIBLE.value}
+            data = {
+                **data,
+                "provider": LLMProvider.OPENAI_COMPATIBLE.value,
+                "requires_token": True,
+            }
             data.setdefault("base_url", default_base_url)
         return data
 

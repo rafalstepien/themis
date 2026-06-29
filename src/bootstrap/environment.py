@@ -6,6 +6,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.bootstrap.exceptions import MissingEnvironmentError
 
+LLM_TOKEN_ENV_VAR = "LLM_API_TOKEN"
+
 
 class EnvSettings(BaseSettings):
     """Base for settings objects hydrated from the process environment.
@@ -46,7 +48,7 @@ class Secrets(EnvSettings):
     """
 
     gitlab_token: str = Field(alias="GITLAB_API_TOKEN")
-    llm_token: str | None = Field(default=None, alias="LLM_API_TOKEN")
+    llm_token: str | None = Field(default=None, alias=LLM_TOKEN_ENV_VAR)
     jira_token: str | None = Field(default=None, alias="JIRA_API_TOKEN")
 
 

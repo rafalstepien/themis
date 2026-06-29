@@ -138,3 +138,23 @@ def test_openai_compatible_provider_requires_base_url(tmp_path: Path) -> None:
 
     with pytest.raises(ValidationError, match="base_url"):
         ThemisConfig.from_yaml(_write_config(tmp_path, body))
+
+
+def test_vendor_shortcut_requires_a_token(tmp_path: Path) -> None:
+    config = ThemisConfig.from_yaml(_write_config(tmp_path, _CONFIG_WITHOUT_REVIEW))
+
+    assert config.llm.requires_token is True
+
+
+def test_explicit_self_host_is_keyless(tmp_path: Path) -> None:
+    config = ThemisConfig.from_yaml(_write_config(tmp_path, _OPENAI_COMPATIBLE_CONFIG))
+
+    assert config.llm.requires_token is False
+
+
+def test_requires_token_cannot_be_set_by_the_user(tmp_path: Path) -> None:
+    body = _OPENAI_COMPATIBLE_CONFIG + "  requires_token: true\n"
+
+    config = ThemisConfig.from_yaml(_write_config(tmp_path, body))
+
+    assert config.llm.requires_token is False

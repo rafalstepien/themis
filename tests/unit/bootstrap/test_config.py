@@ -4,7 +4,7 @@ from pathlib import Path
 from pydantic import ValidationError
 import pytest
 
-from src.bootstrap.config import LLMProvider, ThemisConfig
+from src.bootstrap.config import LLMDeploymentType, ThemisConfig
 
 _FULL_CONFIG = """
 version: 1
@@ -18,16 +18,27 @@ review:
     - helpers/logging
 
 llm:
-  provider: anthropic
+  deployment_type: cloud
   model: claude-opus-4-8
+  base_url: https://api.anthropic.com/v1/
 """
 
 _CONFIG_WITHOUT_REVIEW = """
 version: 1
 
 llm:
-  provider: openai
+  deployment_type: cloud
   model: gpt-4o
+  base_url: https://api.openai.com/v1
+"""
+
+_SELF_HOSTED_CONFIG = """
+version: 1
+
+llm:
+  deployment_type: self_hosted
+  model: qwen2.5-coder
+  base_url: http://localhost:8000/v1
 """
 
 
@@ -48,7 +59,8 @@ def test_loads_full_config(tmp_path: Path) -> None:
         "src/engine",
         "helpers/logging",
     ]
-    assert config.llm.provider is LLMProvider.ANTHROPIC
+    assert config.llm.deployment_type is LLMDeploymentType.CLOUD
+    assert config.llm.base_url == "https://api.anthropic.com/v1/"
     assert config.llm.model == "claude-opus-4-8"
 
 
@@ -62,8 +74,8 @@ def test_warns_when_no_modules_declared(tmp_path: Path, caplog: pytest.LogCaptur
     )
 
 
-def test_unknown_provider_is_rejected(tmp_path: Path) -> None:
-    body = _FULL_CONFIG.replace("provider: anthropic", "provider: bedrock")
+def test_unknown_deployment_type_is_rejected(tmp_path: Path) -> None:
+    body = _FULL_CONFIG.replace("deployment_type: cloud", "deployment_type: bedrock")
 
     with pytest.raises(ValidationError):
         ThemisConfig.from_yaml(_write_config(tmp_path, body))
@@ -73,6 +85,13 @@ def test_missing_required_key_is_rejected(tmp_path: Path) -> None:
     body = _FULL_CONFIG.replace("version: 1", "")
 
     with pytest.raises(ValidationError):
+        ThemisConfig.from_yaml(_write_config(tmp_path, body))
+
+
+def test_base_url_is_required(tmp_path: Path) -> None:
+    body = _FULL_CONFIG.replace("  base_url: https://api.anthropic.com/v1/\n", "")
+
+    with pytest.raises(ValidationError, match="base_url"):
         ThemisConfig.from_yaml(_write_config(tmp_path, body))
 
 
@@ -88,3 +107,15 @@ def test_custom_path_argument_is_honoured(tmp_path: Path) -> None:
     config = ThemisConfig.from_yaml(str(path))
 
     assert config.llm.model == "claude-opus-4-8"
+
+
+def test_cloud_deployment_requires_a_token(tmp_path: Path) -> None:
+    config = ThemisConfig.from_yaml(_write_config(tmp_path, _CONFIG_WITHOUT_REVIEW))
+
+    assert config.llm.requires_token is True
+
+
+def test_self_hosted_deployment_is_keyless(tmp_path: Path) -> None:
+    config = ThemisConfig.from_yaml(_write_config(tmp_path, _SELF_HOSTED_CONFIG))
+
+    assert config.llm.requires_token is False

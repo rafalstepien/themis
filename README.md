@@ -32,6 +32,7 @@ Themis posts review comments directly inside your GitLab Merge Requests. The fas
 
 - ✅ **End-to-end pipeline** — include `themis-ci` in your CI pipeline and it runs on every Merge Request, posting comments automatically.
 - ✅ **OpenAI integration** — use any OpenAI model under the BYOK (Bring-Your-Own-Key) model.
+- ✅ **Open-source models** — point Themis at any OpenAI-compatible endpoint: a hosted provider (Groq, Together, Fireworks, OpenRouter, …) with just an API key, or your own self-hosted server (e.g. vLLM) — no OpenAI account required.
 - ✅ **Compliance by design** — your source code never leaves your runner; only the review request reaches the LLM you control.
 - ✅ **Context-aware reviews** — Themis loads your architecture guides and accumulated rules from past Merge Requests into the review context, producing high-signal feedback.
 - ✅ **Module inference** — once configured, Themis identifies which modules a Merge Request touches and scopes the review accordingly.
@@ -40,7 +41,7 @@ Themis posts review comments directly inside your GitLab Merge Requests. The fas
 
 - Async requests, retries, rules on when to re-run Code Review
 - AST-native engine for byte-offset-grounded comments
-- Additional LLM adapters: Claude, Gemini, and LiteLLM
+- Additional LLM adapters: LiteLLM, and native (non-compat) provider APIs
 - Smarter noise filtering: suppress anything linters already catch
 - Jira adapter to pull business context into reviews
 - Verification of Merge Requests against linked business requirements
@@ -109,7 +110,7 @@ Go to your project → **Settings → CI/CD → Variables** and add both, marked
 
 | Variable | Description |
 |---|---|
-| `LLM_API_TOKEN` | API key for your LLM provider |
+| `LLM_API_TOKEN` | API key for your LLM provider. Optional for keyless self-hosted backends. |
 | `GITLAB_API_TOKEN` | Personal access token of the Themis bot account (from Step 1) |
 
 > Note: Ensure variables are not set as "Protected" because it will block passing them to the script.
@@ -132,10 +133,49 @@ review:
     - src/orders/
     - src/payments/
 
-llm:                      # the LLM provider and model of your choice
-  provider: openai
+llm:                      # the model of your choice
+  deployment_type: cloud  # 'cloud' (key required) or 'self_hosted' (keyless allowed)
   model: gpt-5-nano
+  base_url: https://api.openai.com/v1
 ```
+
+### Using open-source models
+
+Themis speaks a single protocol — the **OpenAI-compatible** `/v1/chat/completions` API — so it works
+with any server that exposes it. You always set `base_url` explicitly (there are no built-in
+defaults) and declare who runs the server with `deployment_type`.
+
+A **hosted provider** (Groq, Together, Fireworks, OpenRouter, …) gives you open-source models with just an API key, reachable from any runner. It's a `cloud` backend, so `LLM_API_TOKEN` is required:
+
+```yaml
+llm:
+  deployment_type: cloud
+  model: qwen/qwen3.6-27b
+  base_url: https://api.groq.com/openai/v1   # set LLM_API_TOKEN to your key
+```
+
+A **self-hosted server** (e.g. [vLLM](https://docs.vllm.ai/)) keeps your code inside your own infrastructure. Mark it `self_hosted`, and set `LLM_API_TOKEN` only if your server requires authentication. The CI runner must be able to reach `base_url`:
+
+```yaml
+llm:
+  deployment_type: self_hosted
+  model: <model-name>
+  base_url: http://your-host:8000/v1
+```
+
+**OpenAI, Gemini and Anthropic** are `cloud` backends reachable through their OpenAI-compatible
+endpoints. Put your vendor key in `LLM_API_TOKEN` and point `base_url` at the vendor's endpoint:
+
+```yaml
+llm:
+  deployment_type: cloud
+  model: gemini-2.5-flash-lite
+  base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+  # OpenAI:    https://api.openai.com/v1
+  # Anthropic: https://api.anthropic.com/v1/
+```
+
+See [`docs/llm-providers.md`](docs/llm-providers.md) for the full provider model.
 
 ## Contributing
 

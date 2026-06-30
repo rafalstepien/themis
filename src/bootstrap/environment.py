@@ -6,6 +6,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.bootstrap.exceptions import MissingEnvironmentError
 
+LLM_TOKEN_ENV_VAR = "LLM_API_TOKEN"
+
 
 class EnvSettings(BaseSettings):
     """Base for settings objects hydrated from the process environment.
@@ -40,12 +42,13 @@ class EnvSettings(BaseSettings):
 class Secrets(EnvSettings):
     """Sensitive tokens sourced from the process environment.
 
-    Mandatory tokens (GitLab, LLM) have no default, so :meth`load` fails if
-    they are absent. Optional tokens (Jira) default to `None` when unset.
+    The GitLab token has no default, so :meth:`load` fails if it is absent.
+    Optional tokens (LLM, Jira) default to `None` when unset; the LLM token is
+    optional because a keyless self-hosted backend needs no credential.
     """
 
     gitlab_token: str = Field(alias="GITLAB_API_TOKEN")
-    llm_token: str = Field(alias="LLM_API_TOKEN")
+    llm_token: str | None = Field(default=None, alias=LLM_TOKEN_ENV_VAR)
     jira_token: str | None = Field(default=None, alias="JIRA_API_TOKEN")
 
 

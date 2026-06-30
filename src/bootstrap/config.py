@@ -24,10 +24,11 @@ def architecture_file_path(module: str) -> str:
     return f"{THEMIS_DIR}/{ARCHITECTURE_SUBDIR}/{module}/{ARCHITECTURE_FILENAME}"
 
 
-class LLMProvider(StrEnum):
-    OPENAI = "openai"
-    ANTHROPIC = "anthropic"
-    GEMINI = "gemini"
+class LLMDeploymentType(StrEnum):
+    """Who runs the model server, which decides whether a token is required."""
+
+    CLOUD = "cloud"
+    SELF_HOSTED = "self_hosted"
 
 
 class ReviewConfig(BaseModel):
@@ -37,8 +38,13 @@ class ReviewConfig(BaseModel):
 
 
 class LLMConfig(BaseModel):
-    provider: LLMProvider
+    deployment_type: LLMDeploymentType
     model: str
+    base_url: str
+
+    @property
+    def requires_token(self) -> bool:
+        return self.deployment_type is LLMDeploymentType.CLOUD
 
 
 class ThemisConfig(BaseModel):

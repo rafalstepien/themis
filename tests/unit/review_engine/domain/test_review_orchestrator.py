@@ -40,7 +40,8 @@ def test_execute__unanchored_comments_posted_as_general():
 
     llm_port_mock = Mock()
     llm_port_mock.generate_code_review.return_value = CodeReviewFactory(
-        comments=[ReviewCommentFactory(), ReviewCommentFactory()]
+        comments=[ReviewCommentFactory(), ReviewCommentFactory()],
+        cohorts=[],
     )
 
     o = ReviewOrchestrator(
@@ -67,7 +68,9 @@ def test_execute__anchored_comment_posted_inline_with_diff_refs():
     anchored = ReviewCommentFactory(anchor=CommentAnchorFactory())
     plain = ReviewCommentFactory()
     llm_port_mock = Mock()
-    llm_port_mock.generate_code_review.return_value = CodeReviewFactory(comments=[anchored, plain])
+    llm_port_mock.generate_code_review.return_value = CodeReviewFactory(
+        comments=[anchored, plain], cohorts=[]
+    )
 
     o = ReviewOrchestrator(
         review_config=ReviewConfig(),
@@ -89,7 +92,7 @@ def test_execute__review_with_no_comments():
     gitlab_port_mock.get_mr_data.return_value = MergeRequestFactory()
 
     llm_port_mock = Mock()
-    llm_port_mock.generate_code_review.return_value = CodeReviewFactory(comments=[])
+    llm_port_mock.generate_code_review.return_value = CodeReviewFactory(comments=[], cohorts=[])
 
     o = ReviewOrchestrator(
         review_config=ReviewConfig(),

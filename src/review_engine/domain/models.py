@@ -154,10 +154,16 @@ def _longest_module_match(path: str, modules: list[str]) -> str | None:
 
 
 @dataclass(frozen=True, slots=True)
+class Change:
+    id: int
+    overview: str
+
+
+@dataclass(frozen=True, slots=True)
 class Cohort:
     name: str
     description: str
-    change_ids: list[int]
+    changes: list[Change]
 
 
 class ReferenceKind(StrEnum):
@@ -217,3 +223,23 @@ class CodeReview:
     cohorts: list[Cohort]
     business_requirements_matrix: list  # TODO Phase 2: model as list[BusinessRequirement]
     comments: list[ReviewComment]
+
+    def build_general_cohort_comment(self) -> ReviewComment | None:
+        if not self.cohorts:
+            return None
+
+        # TODO: relate change ids with actual files
+        # TODO: write orchestrator test that mocks post_comment and verifies that the comment is posted (for now we have only the tests that check empty cohorts)
+        # TODO: consider if the placement of the method is correct
+        # TODO: run tests
+        current_comment_content = "# Overview of the changes in this MR\n\n"
+        COHORT_SECTION_TEMPLATE = "## Cohort {id}: {name}\n{desc}\n\nCHANGES:\n{changes_list}\n\n\n"
+
+        for cohort_id, cohort in enumerate(self.cohorts, start=1):
+            cl = "\n".join([f"<{change.id}>: {change.overview}" for change in cohort.changes])
+            text = COHORT_SECTION_TEMPLATE.format(
+                id=cohort_id, name=cohort.name, desc=cohort.description, changes_list=cl
+            )
+            current_comment_content += text
+
+        return ReviewComment(content=current_comment_content, references=[], anchor=None)

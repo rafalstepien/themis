@@ -1,6 +1,7 @@
 import factory
 
 from src.review_engine.domain.models import (
+    Change,
     ChangedFile,
     CodeReview,
     Cohort,
@@ -54,13 +55,21 @@ class MergeRequestFactory(factory.Factory[MergeRequest]):
     files = factory.LazyFunction(lambda: [ChangedFileFactory()])
 
 
+class CohortChangeFactory(factory.Factory[Change]):
+    class Meta:
+        model = Change
+
+    id = 1
+    overview = "overview"
+
+
 class CohortFactory(factory.Factory[Cohort]):
     class Meta:
         model = Cohort
 
     name = "cohort-1"
     description = "cohort-description"
-    change_ids = factory.LazyFunction(lambda: [1])
+    changes = factory.LazyFunction(lambda: [CohortChangeFactory()])
 
 
 class ReviewCommentFactory(factory.Factory[ReviewComment]):

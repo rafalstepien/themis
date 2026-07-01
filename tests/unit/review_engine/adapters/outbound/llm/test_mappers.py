@@ -7,7 +7,7 @@ from src.review_engine.adapters.outbound.llm.dto import (
     ReferenceDTO,
 )
 from src.review_engine.adapters.outbound.llm.mappers import to_domain
-from src.review_engine.domain.models import MergeRequest, ReferenceKind
+from src.review_engine.domain.models import Change, MergeRequest, ReferenceKind
 from tests.unit.review_engine.domain.factories import ChangedFileFactory, MergeRequestFactory
 
 # A diff whose new file is `src/catalog/pricing.py` with a context line at new
@@ -48,7 +48,7 @@ def test_map_dto_to_domain_object():
     domain = to_domain(_response([comment]), _mr())
 
     assert domain
-    assert domain.cohorts[0].change_ids == [1]
+    assert domain.cohorts[0].changes == [Change(id=1, overview="overview")]
     assert domain.comments[0].references == []
     assert domain.comments[0].anchor is None
 
@@ -57,7 +57,7 @@ def test_map_dto_to_domain_object__no_comments():
     domain = to_domain(_response([]), _mr())
 
     assert domain
-    assert domain.cohorts[0].change_ids == [1]
+    assert domain.cohorts[0].changes == [Change(id=1, overview="overview")]
     assert domain.comments == []
 
 

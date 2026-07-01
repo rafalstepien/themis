@@ -2,6 +2,7 @@ import logging
 
 from src.review_engine.domain.diff_hunks import DiffLine, anchorable_lines_by_new_line
 from src.review_engine.domain.models import (
+    Change,
     ChangedFile,
     CodeReview,
     Cohort,
@@ -31,7 +32,9 @@ def to_domain(
     """
     cohorts = [
         Cohort(
-            name=c.name, description=c.description, change_ids=[change.id for change in c.changes]
+            name=c.name,
+            description=c.description,
+            changes=[Change(id=change.id, overview=change.overview) for change in c.changes],
         )
         for c in dto.cohorts
     ]

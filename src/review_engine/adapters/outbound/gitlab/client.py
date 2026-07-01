@@ -25,6 +25,40 @@ class GitLabClient(GitLabPort):
         self.mr_iid = mr_iid
         self.headers = {"PRIVATE-TOKEN": token}
 
+    def post_general_comment(self, comment: ReviewComment) -> None:
+        """Post a review comment as a general note on the merge request."""
+        body = self._format_body(comment)
+        if not body.strip():
+            # GitLab rejects a blank note body with HTTP 400
+            logger.warning("Skipping empty review comment for MR %s", self.mr_iid)
+            return
+
+        url = f"{self.BASE_API_URL}/projects/{self.project_id}/merge_requests/{self.mr_iid}/notes"
+
+        with handle_gitlab_api_errors(self.mr_iid):
+            response = httpx.post(url, headers=self.headers, json={"body": body})
+            response.raise_for_status()
+
+    def post_inline_comment(self, comment: ReviewComment, diff_refs: DiffRefs) -> None:
+        """Post a review comment anchored to specific line"""
+        if comment.anchor is None:
+            raise ValueError("post_inline_comment requires comment.anchor to be set")
+
+        body = self._format_body(comment)
+        if not body.strip():
+            logger.warning("Skipping empty review comment for MR %s", self.mr_iid)
+            return
+
+        url = (
+            f"{self.BASE_API_URL}/projects/{self.project_id}"
+            f"/merge_requests/{self.mr_iid}/discussions"
+        )
+        payload = {"body": body, "position": self._build_position(comment.anchor, diff_refs)}
+
+        with handle_gitlab_api_errors(self.mr_iid):
+            response = httpx.post(url, headers=self.headers, json=payload)
+            response.raise_for_status()
+
     def get_mr_data(self) -> MergeRequest:
         """
         First fetch merge request data.
@@ -69,40 +103,6 @@ class GitLabClient(GitLabPort):
         if data.encoding == "base64":
             return base64.b64decode(data.content).decode("utf-8")
         return data.content
-
-    def post_general_comment(self, comment: ReviewComment) -> None:
-        """Post a review comment as a general note on the merge request."""
-        body = self._format_body(comment)
-        if not body.strip():
-            # GitLab rejects a blank note body with HTTP 400
-            logger.warning("Skipping empty review comment for MR %s", self.mr_iid)
-            return
-
-        url = f"{self.BASE_API_URL}/projects/{self.project_id}/merge_requests/{self.mr_iid}/notes"
-
-        with handle_gitlab_api_errors(self.mr_iid):
-            response = httpx.post(url, headers=self.headers, json={"body": body})
-            response.raise_for_status()
-
-    def post_inline_comment(self, comment: ReviewComment, diff_refs: DiffRefs) -> None:
-        """Post a review comment anchored to specific line"""
-        if comment.anchor is None:
-            raise ValueError("post_inline_comment requires comment.anchor to be set")
-
-        body = self._format_body(comment)
-        if not body.strip():
-            logger.warning("Skipping empty review comment for MR %s", self.mr_iid)
-            return
-
-        url = (
-            f"{self.BASE_API_URL}/projects/{self.project_id}"
-            f"/merge_requests/{self.mr_iid}/discussions"
-        )
-        payload = {"body": body, "position": self._build_position(comment.anchor, diff_refs)}
-
-        with handle_gitlab_api_errors(self.mr_iid):
-            response = httpx.post(url, headers=self.headers, json=payload)
-            response.raise_for_status()
 
     @staticmethod
     def _build_position(anchor: CommentAnchor, diff_refs: DiffRefs) -> dict:

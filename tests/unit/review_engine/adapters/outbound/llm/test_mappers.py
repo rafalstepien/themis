@@ -19,7 +19,7 @@ def _response(comments: list[CommentDTO]) -> CodeReviewResponseDTO:
     cohort = CohortDTO(
         name="cohort-1",
         description="description",
-        changes=[CohortChangeDTO(id=1, overview="overview")],
+        changes=[CohortChangeDTO(path="dummy/path1.py", overview="overview")],
     )
     return CodeReviewResponseDTO(
         cohorts=[cohort],
@@ -48,7 +48,7 @@ def test_map_dto_to_domain_object():
     domain = to_domain(_response([comment]), _mr())
 
     assert domain
-    assert domain.cohorts[0].changes == [Change(id=1, overview="overview")]
+    assert domain.cohorts[0].changes == [Change(path="dummy/path1.py", overview="overview")]
     assert domain.comments[0].references == []
     assert domain.comments[0].anchor is None
 
@@ -57,7 +57,7 @@ def test_map_dto_to_domain_object__no_comments():
     domain = to_domain(_response([]), _mr())
 
     assert domain
-    assert domain.cohorts[0].changes == [Change(id=1, overview="overview")]
+    assert domain.cohorts[0].changes == [Change(path="dummy/path1.py", overview="overview")]
     assert domain.comments == []
 
 

@@ -34,7 +34,7 @@ def to_domain(
         Cohort(
             name=c.name,
             description=c.description,
-            changes=[Change(id=change.id, overview=change.overview) for change in c.changes],
+            changes=[Change(path=change.path, overview=change.overview) for change in c.changes],
         )
         for c in dto.cohorts
     ]
@@ -66,7 +66,8 @@ class _AnchorIndex:
 
     def __init__(self, mr: MergeRequest):
         self._by_path: dict[str, tuple[ChangedFile, dict[int, DiffLine]]] = {
-            file.new_path: (file, anchorable_lines_by_new_line(file.raw_diff)) for file in mr.files
+            file.display_path: (file, anchorable_lines_by_new_line(file.raw_diff))
+            for file in mr.files
         }
 
     def resolve(self, comment: CommentDTO) -> CommentAnchor | None:

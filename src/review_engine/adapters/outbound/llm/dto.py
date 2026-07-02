@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class CohortChangeDTO(BaseModel):
-    id: int
+    path: str
     overview: str
 
 
@@ -24,7 +24,7 @@ class CommentDTO(BaseModel):
     content: str
     references: list[ReferenceDTO]
     file_path: str | None = Field(
-        description="New-file path of the change the comment is about, copied from its `change_id` header. `None` when the comment is not tied to one file.",
+        description="New-file path of the change the comment is about. `None` when the comment is not tied to one file.",
         default=None,
     )
     line: int | None = Field(

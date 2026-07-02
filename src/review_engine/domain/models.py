@@ -31,39 +31,28 @@ class DiffRefs:
 
 
 class ChangeType(StrEnum):
-    ADDITION = "addition"
-    DELETION = "deletion"
-    CONTENT_CHANGE = "content_change"
+    ADDED = "added"
+    DELETED = "deleted"
+    RENAMED = "renamed"
+    MODIFIED = "modified"
 
 
 @dataclass(frozen=True, slots=True)
 class ChangedFile:
-    change_id: int
     new_path: str
     old_path: str
     new_content: str
     old_content: str
     raw_diff: str
-    change_type: ChangeType | None = None  # TODO: handle change type inference
+    change_type: ChangeType
 
-    @classmethod
-    def create(
-        cls,
-        change_id: int,
-        new_path: str,
-        old_path: str,
-        new_content: str,
-        old_content: str,
-        raw_diff: str,
-    ) -> "ChangedFile":
-        return cls(
-            change_id=change_id,
-            new_path=new_path,
-            old_path=old_path,
-            new_content=new_content,
-            old_content=old_content,
-            raw_diff=raw_diff,
-        )
+    @property
+    def display_path(self) -> str:
+        if self.change_type == ChangeType.DELETED:
+            return self.old_path
+        if self.change_type == ChangeType.RENAMED:
+            return f"{self.old_path} -> {self.new_path}"
+        return self.new_path
 
 
 @dataclass
@@ -155,7 +144,7 @@ def _longest_module_match(path: str, modules: list[str]) -> str | None:
 
 @dataclass(frozen=True, slots=True)
 class Change:
-    id: int
+    path: str
     overview: str
 
 
@@ -228,15 +217,12 @@ class CodeReview:
         if not self.cohorts:
             return None
 
-        # TODO: relate change ids with actual files
-        # TODO: write orchestrator test that mocks post_comment and verifies that the comment is posted (for now we have only the tests that check empty cohorts)
         # TODO: consider if the placement of the method is correct
-        # TODO: run tests
         current_comment_content = "# Overview of the changes in this MR\n\n"
         COHORT_SECTION_TEMPLATE = "## Cohort {id}: {name}\n{desc}\n\nCHANGES:\n{changes_list}\n\n\n"
 
         for cohort_id, cohort in enumerate(self.cohorts, start=1):
-            cl = "\n".join([f"<{change.id}>: {change.overview}" for change in cohort.changes])
+            cl = "\n".join([f"`{change.path}`: {change.overview}" for change in cohort.changes])
             text = COHORT_SECTION_TEMPLATE.format(
                 id=cohort_id, name=cohort.name, desc=cohort.description, changes_list=cl
             )

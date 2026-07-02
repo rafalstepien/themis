@@ -3,6 +3,7 @@ import factory
 from src.review_engine.domain.models import (
     Change,
     ChangedFile,
+    ChangeType,
     CodeReview,
     Cohort,
     CommentAnchor,
@@ -35,12 +36,12 @@ class ChangedFileFactory(factory.Factory[ChangedFile]):
     class Meta:
         model = ChangedFile
 
-    change_id = 1
     new_path = "new-path"
     old_path = "old-path"
     new_content = "new-content"
     old_content = "old-content"
     raw_diff = "+2312 -342"
+    change_type = ChangeType.MODIFIED
 
 
 class MergeRequestFactory(factory.Factory[MergeRequest]):

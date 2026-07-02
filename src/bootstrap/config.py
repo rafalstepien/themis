@@ -35,6 +35,7 @@ class ReviewConfig(BaseModel):
     max_file_chars: int = Field(default=60_000)
     max_changed_files: int = Field(default=50)
     modules: list[str] = Field(default_factory=list)
+    # TODO: add parameter controlling whether to include business context
 
 
 class LLMConfig(BaseModel):

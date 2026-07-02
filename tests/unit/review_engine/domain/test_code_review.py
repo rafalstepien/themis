@@ -8,15 +8,15 @@ EXPECTED_COMMENT_MARKDOWN = """# Overview of the changes in this MR
 cohort-1-description
 
 CHANGES:
-<1>: change-1-overview
-<2>: change-2-overview
+`dummy/path1.py`: change-1-overview
+`dummy/path2.py`: change-2-overview
 
 
 ## Cohort 2: cohort-2
 cohort-2-description
 
 CHANGES:
-<3>: change-3-overview
+`dummy/path3.py`: change-3-overview
 
 
 """
@@ -31,15 +31,15 @@ CHANGES:
                     name="cohort-1",
                     description="cohort-1-description",
                     changes=[
-                        Change(id=1, overview="change-1-overview"),
-                        Change(id=2, overview="change-2-overview"),
+                        Change(path="dummy/path1.py", overview="change-1-overview"),
+                        Change(path="dummy/path2.py", overview="change-2-overview"),
                     ],
                 ),
                 Cohort(
                     name="cohort-2",
                     description="cohort-2-description",
                     changes=[
-                        Change(id=3, overview="change-3-overview"),
+                        Change(path="dummy/path3.py", overview="change-3-overview"),
                     ],
                 ),
             ],

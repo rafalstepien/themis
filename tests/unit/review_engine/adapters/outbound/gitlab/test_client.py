@@ -59,7 +59,7 @@ def _client() -> GitLabClient:
     return GitLabClient(token="tok", project_id="42", mr_iid=7)
 
 
-@patch("src.review_engine.adapters.outbound.gitlab.client.httpx.post")
+@patch("httpx.Client.post")
 def test_post_general_comment_posts_to_notes_endpoint(mock_post):
     mock_post.return_value = Mock()
 
@@ -70,7 +70,7 @@ def test_post_general_comment_posts_to_notes_endpoint(mock_post):
     assert mock_post.call_args.kwargs["json"] == {"body": "a finding"}
 
 
-@patch("src.review_engine.adapters.outbound.gitlab.client.httpx.post")
+@patch("httpx.Client.post")
 def test_post_inline_comment_builds_position_for_added_line(mock_post):
     mock_post.return_value = Mock()
     comment = ReviewComment(
@@ -97,7 +97,7 @@ def test_post_inline_comment_builds_position_for_added_line(mock_post):
     }
 
 
-@patch("src.review_engine.adapters.outbound.gitlab.client.httpx.post")
+@patch("httpx.Client.post")
 def test_post_inline_comment_includes_old_line_for_context_line(mock_post):
     mock_post.return_value = Mock()
     comment = ReviewComment(

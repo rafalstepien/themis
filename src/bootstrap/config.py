@@ -55,7 +55,7 @@ class ThemisConfig(BaseModel):
     llm: LLMConfig
 
     @classmethod
-    def from_yaml(cls, path: str | Path = DEFAULT_CONFIG_PATH) -> "ThemisConfig":
+    def from_yaml(cls, path: Path) -> "ThemisConfig":
         with open(path, "r") as f:
             config = cls(**yaml.safe_load(f))
         if not config.review.modules:

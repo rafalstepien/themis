@@ -219,10 +219,12 @@ class CodeReview:
 
         # TODO: consider if the placement of the method is correct
         current_comment_content = "# Overview of the changes in this MR\n\n"
-        COHORT_SECTION_TEMPLATE = "## Cohort {id}: {name}\n{desc}\n\nCHANGES:\n{changes_list}\n\n\n"
+        COHORT_SECTION_TEMPLATE = (
+            "## Cohort {id}: {name}\n{desc}\n\n**CHANGES**\n\n{changes_list}\n\n\n"
+        )
 
         for cohort_id, cohort in enumerate(self.cohorts, start=1):
-            cl = "\n".join([f"`{change.path}`: {change.overview}" for change in cohort.changes])
+            cl = "\n".join([f"* `{change.path}`: {change.overview}" for change in cohort.changes])
             text = COHORT_SECTION_TEMPLATE.format(
                 id=cohort_id, name=cohort.name, desc=cohort.description, changes_list=cl
             )

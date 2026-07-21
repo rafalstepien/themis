@@ -11,9 +11,7 @@ class FileDiffDTOFactory(factory.Factory[FileDiffDTO]):
         model = FileDiffDTO
 
     new_path = "new-path"
-    new_content = "new-content"
     old_path = "old-path"
-    old_content = "old-content"
     diff = "diff"
     new_file = False
     deleted_file = False

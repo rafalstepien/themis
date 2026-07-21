@@ -1,9 +1,9 @@
 from src.review_engine.domain.models import ChangedFile, ChangeType, DiffRefs, MergeRequest
 
-from .dto import DiffRefsDTO, MergeRequestDTO
+from .dto import DiffRefsDTO, FileContents, MergeRequestDTO
 
 
-def to_domain(dto: MergeRequestDTO) -> MergeRequest:
+def to_domain(dto: MergeRequestDTO, file_contents: dict[str, FileContents]) -> MergeRequest:
     return MergeRequest.create(
         mr_id=str(dto.iid),
         target_branch=dto.target_branch,
@@ -14,8 +14,8 @@ def to_domain(dto: MergeRequestDTO) -> MergeRequest:
             ChangedFile(
                 new_path=c.new_path,
                 old_path=c.old_path,
-                new_content=c.new_content or "",
-                old_content=c.old_content or "",
+                new_content=file_contents[c.new_path].new or "",
+                old_content=file_contents[c.new_path].old or "",
                 raw_diff=c.diff,
                 change_type=_infer_change_type(c.new_file, c.renamed_file, c.deleted_file),
             )

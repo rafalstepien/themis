@@ -8,6 +8,7 @@ from src.review_engine.domain.models import CommentAnchor, DiffRefs, MergeReques
 from src.review_engine.ports.outbound import GitLabPort
 
 from .dto import (
+    FileContents,
     GitLabFileResponse,
     MergeRequestDTO,
 )
@@ -23,7 +24,7 @@ class GitLabClient(GitLabPort):
     def __init__(self, token: str, project_id: str, mr_iid: int):
         self.project_id = project_id
         self.mr_iid = mr_iid
-        self.headers = {"PRIVATE-TOKEN": token}
+        self._client = httpx.Client(headers={"PRIVATE-TOKEN": token})
 
     def post_general_comment(self, comment: ReviewComment) -> None:
         """Post a review comment as a general note on the merge request."""
@@ -36,7 +37,7 @@ class GitLabClient(GitLabPort):
         url = f"{self.BASE_API_URL}/projects/{self.project_id}/merge_requests/{self.mr_iid}/notes"
 
         with handle_gitlab_api_errors(self.mr_iid):
-            response = httpx.post(url, headers=self.headers, json={"body": body})
+            response = self._client.post(url, json={"body": body})
             response.raise_for_status()
 
     def post_inline_comment(self, comment: ReviewComment, diff_refs: DiffRefs) -> None:
@@ -56,35 +57,32 @@ class GitLabClient(GitLabPort):
         payload = {"body": body, "position": self._build_position(comment.anchor, diff_refs)}
 
         with handle_gitlab_api_errors(self.mr_iid):
-            response = httpx.post(url, headers=self.headers, json=payload)
+            response = self._client.post(url, json=payload)
             response.raise_for_status()
 
     def get_mr_data(self) -> MergeRequest:
-        """
-        First fetch merge request data.
-        Then update the DTO with the file versions from both branches
-        (couldn't do it in single request)
-        """
-        mr_data = self._get_mr_data()
+        dto = self._get_merge_request()
+        file_contents = {
+            c.new_path: FileContents(
+                old=""
+                if c.new_file
+                else self._get_branch_file_content(c.old_path, dto.target_branch),
+                new=""
+                if c.deleted_file
+                else self._get_branch_file_content(c.new_path, dto.source_branch),
+            )
+            for c in dto.changes
+        }
+        return to_domain(dto, file_contents)
 
-        # TODO: Use asyncio.gather to paralellize
-        for change in mr_data.changes:
-            old_content = self._get_branch_file_content(change.old_path, mr_data.target_branch)
-            new_content = self._get_branch_file_content(change.new_path, mr_data.source_branch)
-            change.enrich_with_content(old_content, new_content)
-
-        return to_domain(mr_data)
-
-    def _get_mr_data(self) -> MergeRequestDTO:
-        """Fetch all file changes for a merge request from GitLab API."""
+    def _get_merge_request(self) -> MergeRequestDTO:
         url = f"{self.BASE_API_URL}/projects/{self.project_id}/merge_requests/{self.mr_iid}/changes"
 
         with handle_gitlab_api_errors(self.mr_iid):
-            response = httpx.get(url, headers=self.headers)
+            response = self._client.get(url)
             response.raise_for_status()
 
-        with handle_gitlab_data_errors():
-            return MergeRequestDTO(**response.json())
+        return MergeRequestDTO.model_validate(response.json())
 
     def _get_branch_file_content(self, file_path: str, branch: str) -> str:
         """Fetch raw file content from a specific branch, decoding base64. Returns empty string for missing files."""
@@ -92,7 +90,7 @@ class GitLabClient(GitLabPort):
         url = f"{self.BASE_API_URL}/projects/{self.project_id}/repository/files/{encoded_path}"
 
         with handle_gitlab_api_errors(self.mr_iid):
-            response = httpx.get(url, headers=self.headers, params={"ref": branch})
+            response = self._client.get(url, params={"ref": branch})
             if response.status_code == 404:
                 return ""  # if the file does not exist, assume it's empty
             response.raise_for_status()

@@ -7,16 +7,18 @@ EXPECTED_COMMENT_MARKDOWN = """# Overview of the changes in this MR
 ## Cohort 1: cohort-1
 cohort-1-description
 
-CHANGES:
-`dummy/path1.py`: change-1-overview
-`dummy/path2.py`: change-2-overview
+**CHANGES**
+
+* `dummy/path1.py`: change-1-overview
+* `dummy/path2.py`: change-2-overview
 
 
 ## Cohort 2: cohort-2
 cohort-2-description
 
-CHANGES:
-`dummy/path3.py`: change-3-overview
+**CHANGES**
+
+* `dummy/path3.py`: change-3-overview
 
 
 """

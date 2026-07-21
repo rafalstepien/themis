@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class FileDiffDTO(BaseModel):
@@ -10,35 +10,43 @@ class FileDiffDTO(BaseModel):
     new_file: bool
     renamed_file: bool
     deleted_file: bool
-    old_content: str | None = None
-    new_content: str | None = None
 
-    def enrich_with_content(self, old_content: str, new_content: str) -> None:
-        self.new_content = new_content
-        self.old_content = old_content
+
+class FileContents(BaseModel):
+    old: str | None = None
+    new: str | None = None
 
 
 class DiffRefsDTO(BaseModel):
     """
-    The commit SHAs GitLab resolves an inline comment's position against.
-    For explanation see docs/commit-sha.md
+    Identifies a specific merge request diff version: the three commit SHAs
+    that pin down what was diffed against what, and when. Used to compute
+    the diff content itself, detect target-branch drift, and resolve inline
+    comment positions across diff versions.
+
+    For visualization see docs/commit-sha.md
     """
 
-    base_sha: str
-    start_sha: str
-    head_sha: str
+    base_sha: str = Field(
+        description="Last common commit of source and target. Changes only during rebase."
+    )
+    start_sha: str = Field(
+        description="Snapshot of target (main) branch's HEAD at the moment of diff generation"
+    )
+    head_sha: str = Field(
+        description="Head of the source (feature) branch at the moment of diff generation"
+    )
 
 
 class MergeRequestDTO(BaseModel):
     """Represents complete merge request data from GitLab API."""
 
-    id: int
-    iid: int
-    project_id: int
-    title: str
-    description: str
-    source_branch: str
-    target_branch: str
+    iid: int = Field(description="Merge request id within the project")
+    project_id: int = Field(description="ID of a project where MR sits")
+    title: str = Field(description="Merge request title")
+    description: str = Field(description="Merge request description")
+    source_branch: str = Field(description="Branch that introduces the change")
+    target_branch: str = Field(description="Target, usually main")
     changes: list[FileDiffDTO]
     diff_refs: DiffRefsDTO | None = None
 

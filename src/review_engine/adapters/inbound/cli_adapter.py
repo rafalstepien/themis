@@ -4,7 +4,7 @@ import sys
 import click
 
 from src.bootstrap.config import DEFAULT_CONFIG_PATH, THEMIS_DIR, ThemisConfig
-from src.bootstrap.environment import CIContext, Secrets
+from src.bootstrap.environment import CIContext, CISecrets
 from src.bootstrap.exceptions import MissingEnvironmentError
 from src.review_engine.adapters.outbound import (
     BestPracticesClient,
@@ -27,7 +27,7 @@ class ReviewEngineCLIAdapter:
 
     def run(self) -> None:
         try:
-            secrets = Secrets.load()
+            secrets = CISecrets.load()
             ci_context = CIContext.load()
         except MissingEnvironmentError as exc:
             click.echo(f"CRITICAL: {exc}", err=True)

@@ -1,5 +1,7 @@
 #!/bin/bash
 # Local testing script - Simulates GitLab CI environment
+# .env.test defines project (themis-example)
+#           and mr ->  
 
 set -e
 

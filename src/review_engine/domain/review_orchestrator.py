@@ -52,6 +52,10 @@ class ReviewOrchestrator:
         self._log_loaded_context(modules, analysis_context)
         review = self.llm_port.generate_code_review(mr, analysis_context)
 
+        cohorts_comment = review.build_general_cohort_comment()
+        if cohorts_comment:
+            self.gitlab_port.post_general_comment(cohorts_comment)
+
         # TODO: Add POST for cohorts with nice formatting
         for comment in review.comments:
             if comment.anchor is not None and mr.diff_refs is not None:

@@ -34,7 +34,7 @@ Focus exclusively on:
 Do NOT comment on formatting, naming style, or anything a linter already catches.
 
 Notes:
-- Every file must appear in exactly one cohort, referenced by its numeric change_id.
+- Every file must appear in exactly one cohort, referenced by its path.
 - Return cohorts in the order a reviewer should read them — root cause first, downstream effects \
  after.
 - The `overview` per file must describe what happened in that file, not repeat the cohort \
@@ -57,10 +57,10 @@ the "why" before seeing the "what".
 **Good cohort example:**
 
 Input files:
-  [change_id=1] src/dtos/order_item_dto.py  — added `discount_amount` field
-  [change_id=2] src/services/pricing_service.py — reads new field, applies discount
-  [change_id=3] src/api/orders_router.py — exposes discount in response schema
-  [change_id=4] tests/test_pricing_service.py — unit tests for discount logic
+  src/dtos/order_item_dto.py  — added `discount_amount` field
+  src/services/pricing_service.py — reads new field, applies discount
+  src/api/orders_router.py — exposes discount in response schema
+  tests/test_pricing_service.py — unit tests for discount logic
 
 Good output:
 {
@@ -105,7 +105,7 @@ architecture contract you were given (see "references" below)
 
 **Anchoring (`file_path` + `line`).** Pin each comment to the exact changed line \
 it is about so it can be posted inline:
-- Set `file_path` to that file's path exactly as shown in its `[change_id=...]` header.
+- Set `file_path` to that file's path exactly.
 - Set `line` to the number in the left gutter of the offending line in the \
 annotated diff. Gutter numbers are new-file line numbers; only added (`+`) and \
 context (` `) lines have one. Copy the number — do not count or guess.
@@ -208,7 +208,7 @@ def _format_files(mr: MergeRequest) -> str:
     blocks: list[str] = []
     for f in mr.files:
         blocks.append(
-            f"## [change_id={f.change_id}] {f.new_path}\n"
+            f"## {f.display_path}\n"
             "Left gutter = new-file line number (cite it as `line`).\n"
             f"```\n{_annotate_diff(f.raw_diff)}\n```"
         )

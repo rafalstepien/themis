@@ -10,9 +10,26 @@ tasks:
       - ./scripts/test_local.sh
   
   run-unit-tests:
-    desc: Run test suite
+    desc: Run full unit test suite
     cmds:
       - uv run python3 -m pytest -vvs tests/unit
+
+  run-single-unit-test:
+    desc: Run one unit test by passing the test name (task unit-test-single -- TEST_NAME)
+    summary: |
+      Pass the test name after `--`. 
+      Example: task unit-test-single -- test_my_feature
+    cmds:
+      - uv run python3 -m pytest -vvs tests/unit -k "{{.CLI_ARGS}}"
+
+  run-coverage:
+    desc: Run unit tests and report test coverage (ports and __init__ files excluded)
+    summary: |
+      Shows per-file line/branch coverage with the exact uncovered lines, so you
+      can spot logic that lacks tests. Exclusions live in pyproject.toml
+      ([tool.coverage.*]).
+    cmds:
+      - uv run python3 -m pytest tests/unit --cov --cov-report=term-missing
 
   run-linters:
     desc: Run linters and type checker locally (auto-fixes and reformats in place)

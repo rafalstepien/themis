@@ -19,7 +19,6 @@ def test_build_user_prompt_renders_change_header_and_gutter():
     mr = MergeRequestFactory.build(
         files=[
             ChangedFileFactory.build(
-                change_id=1,
                 new_path="src/catalog/pricing.py",
                 raw_diff="@@ -1,0 +1,1 @@\n+price = 1.5\n",
             )
@@ -28,5 +27,5 @@ def test_build_user_prompt_renders_change_header_and_gutter():
 
     prompt = build_user_prompt(mr, AnalysisContext())
 
-    assert "## [change_id=1] src/catalog/pricing.py" in prompt
+    assert "## src/catalog/pricing.py" in prompt
     assert "    1 +price = 1.5" in prompt

@@ -31,39 +31,28 @@ class DiffRefs:
 
 
 class ChangeType(StrEnum):
-    ADDITION = "addition"
-    DELETION = "deletion"
-    CONTENT_CHANGE = "content_change"
+    ADDED = "added"
+    DELETED = "deleted"
+    RENAMED = "renamed"
+    MODIFIED = "modified"
 
 
 @dataclass(frozen=True, slots=True)
 class ChangedFile:
-    change_id: int
     new_path: str
     old_path: str
     new_content: str
     old_content: str
     raw_diff: str
-    change_type: ChangeType | None = None  # TODO: handle change type inference
+    change_type: ChangeType
 
-    @classmethod
-    def create(
-        cls,
-        change_id: int,
-        new_path: str,
-        old_path: str,
-        new_content: str,
-        old_content: str,
-        raw_diff: str,
-    ) -> "ChangedFile":
-        return cls(
-            change_id=change_id,
-            new_path=new_path,
-            old_path=old_path,
-            new_content=new_content,
-            old_content=old_content,
-            raw_diff=raw_diff,
-        )
+    @property
+    def display_path(self) -> str:
+        if self.change_type == ChangeType.DELETED:
+            return self.old_path
+        if self.change_type == ChangeType.RENAMED:
+            return f"{self.old_path} -> {self.new_path}"
+        return self.new_path
 
 
 @dataclass
@@ -154,10 +143,16 @@ def _longest_module_match(path: str, modules: list[str]) -> str | None:
 
 
 @dataclass(frozen=True, slots=True)
+class Change:
+    path: str
+    overview: str
+
+
+@dataclass(frozen=True, slots=True)
 class Cohort:
     name: str
     description: str
-    change_ids: list[int]
+    changes: list[Change]
 
 
 class ReferenceKind(StrEnum):
@@ -217,3 +212,22 @@ class CodeReview:
     cohorts: list[Cohort]
     business_requirements_matrix: list  # TODO Phase 2: model as list[BusinessRequirement]
     comments: list[ReviewComment]
+
+    def build_general_cohort_comment(self) -> ReviewComment | None:
+        if not self.cohorts:
+            return None
+
+        # TODO: consider if the placement of the method is correct
+        current_comment_content = "# Overview of the changes in this MR\n\n"
+        COHORT_SECTION_TEMPLATE = (
+            "## Cohort {id}: {name}\n{desc}\n\n**CHANGES**\n\n{changes_list}\n\n\n"
+        )
+
+        for cohort_id, cohort in enumerate(self.cohorts, start=1):
+            cl = "\n".join([f"* `{change.path}`: {change.overview}" for change in cohort.changes])
+            text = COHORT_SECTION_TEMPLATE.format(
+                id=cohort_id, name=cohort.name, desc=cohort.description, changes_list=cl
+            )
+            current_comment_content += text
+
+        return ReviewComment(content=current_comment_content, references=[], anchor=None)

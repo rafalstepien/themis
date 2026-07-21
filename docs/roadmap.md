@@ -15,8 +15,8 @@ Getting high-signal, contextual feedback directly inside a GitLab Merge Request 
 ### Phase 2: Finish the Pipeline (`0.2.0`)
 *Theme: stop discarding what the engine already computes, and plug in what's built but disconnected.*
 #### Implementation
-- [ ] Inline comments: anchor each review comment to its changed line (from diff hunks) and post via the GitLab position API instead of as free-standing comments
-- [ ] Post Cohorts and as a top-level summary comment (reading guide)
+- [x] Inline comments: anchor each review comment to its changed line (from diff hunks) and post via the GitLab position API instead of as free-standing comments
+- [x] Post Cohorts and as a top-level summary comment (reading guide)
 - [ ] Wire technology detection (from `pyproject.toml` / file extensions) so per-technology best-practices context loads
 - [ ] Linter Noise Filtering: parse local linter config (e.g. `[tool.ruff]`, `.eslintrc.json`) and instruct the LLM to stay silent on anything the linter already covers
 - [ ] Enforce a per-file change-size limit in `should_be_reviewed` (skip oversized/generated files)

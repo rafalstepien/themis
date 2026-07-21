@@ -35,6 +35,7 @@ class ReviewConfig(BaseModel):
     max_file_chars: int = Field(default=60_000)
     max_changed_files: int = Field(default=50)
     modules: list[str] = Field(default_factory=list)
+    # TODO: add parameter controlling whether to include business context
 
 
 class LLMConfig(BaseModel):
@@ -54,7 +55,7 @@ class ThemisConfig(BaseModel):
     llm: LLMConfig
 
     @classmethod
-    def from_yaml(cls, path: str | Path = DEFAULT_CONFIG_PATH) -> "ThemisConfig":
+    def from_yaml(cls, path: Path) -> "ThemisConfig":
         with open(path, "r") as f:
             config = cls(**yaml.safe_load(f))
         if not config.review.modules:

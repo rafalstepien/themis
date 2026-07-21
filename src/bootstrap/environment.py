@@ -9,42 +9,29 @@ from src.bootstrap.exceptions import MissingEnvironmentError
 LLM_TOKEN_ENV_VAR = "LLM_API_TOKEN"
 
 
-class EnvSettings(BaseSettings):
-    """Base for settings objects hydrated from the process environment.
-
-    Subclasses declare their fields with ``Field(alias=...)`` naming the env
-    var; mandatory fields omit a default, optional ones provide one. Reading
-    and validating the environment is the model's own responsibility via
-    :meth:`load`.
-    """
-
+class _EnvSettings(BaseSettings):
     model_config = SettingsConfigDict(extra="ignore")
 
     @classmethod
     def load(cls) -> Self:
-        """Build the model from the environment.
-
-        Raises:
-            MissingEnvironmentError: if any mandatory variable is unset.
-        """
         try:
             return cls()
         except ValidationError as exc:
             missing = [
-                str(alias)
+                str(location)
                 for error in exc.errors()
                 if error["type"] == "missing"
-                for alias in error["loc"]
+                for location in error["loc"]
             ]
             raise MissingEnvironmentError(missing) from exc
 
 
-class Secrets(EnvSettings):
-    """Sensitive tokens sourced from the process environment.
+class CISecrets(_EnvSettings):
+    """
+    Secret tokens sourced from the runner environment.
 
-    The GitLab token has no default, so :meth:`load` fails if it is absent.
-    Optional tokens (LLM, Jira) default to `None` when unset; the LLM token is
-    optional because a keyless self-hosted backend needs no credential.
+    GITLAB_API_TOKEN is only one required for the review to run.
+    LLM_API_TOKEN is optional, because a keyless self-hosted backend needs no credential
     """
 
     gitlab_token: str = Field(alias="GITLAB_API_TOKEN")
@@ -52,11 +39,10 @@ class Secrets(EnvSettings):
     jira_token: str | None = Field(default=None, alias="JIRA_API_TOKEN")
 
 
-class CIContext(EnvSettings):
-    """Non-secret CI runtime context injected by the GitLab runner.
-
-    These identify the merge request under review. They are mandatory: the
-    review cannot run without knowing which project and MR it targets.
+class CIContext(_EnvSettings):
+    """
+    Non-secret CI runtime context injected by the GitLab runner.
+    All of them are required.
     """
 
     project_id: str = Field(alias="CI_PROJECT_ID")

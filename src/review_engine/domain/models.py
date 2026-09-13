@@ -1,11 +1,16 @@
 from dataclasses import dataclass, field
 from enum import StrEnum
+import logging
 
 from src.bootstrap.config import (
     ReviewConfig,
     architecture_file_path,
     rule_file_path,
 )
+
+from .diff_hunks import DiffLineKind, parse_diff
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -41,9 +46,9 @@ class ChangeType(StrEnum):
 class ChangedFile:
     new_path: str
     old_path: str
-    new_content: str
-    old_content: str
     raw_diff: str
+    generated_file: bool
+    too_large: bool
     change_type: ChangeType
 
     @property
@@ -53,6 +58,19 @@ class ChangedFile:
         if self.change_type == ChangeType.RENAMED:
             return f"{self.old_path} -> {self.new_path}"
         return self.new_path
+
+    @property
+    def number_of_lines_changed(self) -> int:
+        return sum(1 for line in parse_diff(self.raw_diff) if line.kind is not DiffLineKind.CONTEXT)
+
+    def is_reviewable(self, max_changed_lines_per_file: int) -> bool:
+        if (
+            self.generated_file
+            or self.too_large
+            or self.number_of_lines_changed > max_changed_lines_per_file
+        ):
+            return False
+        return True
 
 
 @dataclass
@@ -92,19 +110,19 @@ class MergeRequest:  # Aggregate Root
             diff_refs=diff_refs,
         )
 
-    def should_be_reviewed(self, config: ReviewConfig) -> bool:
+    def should_be_reviewed(self, max_changed_files: int) -> bool:
         """
         Business Rule (Invariant): We should not run an AI review if
         MR is empty or excessively massive.
         """
-        if len(self.files) == 0:
+        if not self.files:
+            logger.warning("Merge Request empty (no changed files). Code review won't run.")
             return False
-        if len(self.files) > config.max_changed_files:
+        if len(self.files) > max_changed_files:
+            logger.warning(
+                "Number of changed files exceeds the configured liit. Code review won't run."
+            )
             return False
-        # TODO: add rule
-        #  for each file in the merge request
-        #      if number of changes exceeds max number of changes
-        #          return False
         return True
 
     def affected_modules(self, config: ReviewConfig) -> list[str]:
@@ -123,6 +141,16 @@ class MergeRequest:  # Aggregate Root
                 if module is not None:
                     matched.add(module)
         return [module for module in config.modules if module in matched]
+
+    def remove_too_big_files(self, max_changed_lines_per_file: int) -> None:
+        new_files = []
+        for f in self.files:
+            if f.is_reviewable(max_changed_lines_per_file):
+                new_files.append(f)
+            else:
+                logger.warning("Skipping not reviewable file %s", f.display_path)
+
+        self.files = new_files
 
 
 def _longest_module_match(path: str, modules: list[str]) -> str | None:
@@ -231,3 +259,42 @@ class CodeReview:
             current_comment_content += text
 
         return ReviewComment(content=current_comment_content, references=[], anchor=None)
+
+
+@dataclass(frozen=True, slots=True)
+class MRCommentAuthor:
+    id: int
+    username: str
+    name: str
+
+
+@dataclass(frozen=True, slots=True)
+class MRComment:
+    id: int
+    system: bool
+    author: MRCommentAuthor
+
+
+@dataclass(frozen=True, slots=True)
+class MRComments:
+    comments: list[MRComment]
+
+    def code_review_already_performed(self, token_owner: TokenOwner) -> bool:
+        for comment in self.comments:
+            if not comment.system:
+                if self._review_account_is_comment_author(comment.author.id, token_owner.id):
+                    return True
+        return False
+
+    def _review_account_is_comment_author(
+        self, comment_author_id: int, token_owner_id: int
+    ) -> bool:
+        return comment_author_id == token_owner_id
+
+
+@dataclass(frozen=True, slots=True)
+class TokenOwner:
+    id: int
+    username: str
+    name: str
+    email: str

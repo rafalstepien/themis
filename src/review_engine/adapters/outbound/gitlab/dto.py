@@ -10,11 +10,8 @@ class FileDiffDTO(BaseModel):
     new_file: bool
     renamed_file: bool
     deleted_file: bool
-
-
-class FileContents(BaseModel):
-    old: str | None = None
-    new: str | None = None
+    too_large: bool = False
+    generated_file: bool = False
 
 
 class DiffRefsDTO(BaseModel):
@@ -51,6 +48,29 @@ class MergeRequestDTO(BaseModel):
     diff_refs: DiffRefsDTO | None = None
 
 
-class GitLabFileResponse(BaseModel):
+class GitLabFileResponseDTO(BaseModel):
     content: str
     encoding: str
+
+
+class GitLabNoteAuthorDTO(BaseModel):
+    id: int
+    username: str
+    name: str
+
+
+class GitLabNoteDTO(BaseModel):
+    id: int
+    author: GitLabNoteAuthorDTO
+    system: bool
+
+
+class GitLabNotesResponseDTO(BaseModel):
+    notes: list[GitLabNoteDTO]
+
+
+class TokenOwnerIdentityDTO(BaseModel):
+    id: int
+    username: str
+    name: str
+    email: str

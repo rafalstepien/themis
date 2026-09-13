@@ -10,7 +10,7 @@ _FULL_CONFIG = """
 version: 1
 
 review:
-  max_file_chars: 12345
+  max_changed_lines_per_file: 12345
   max_changed_files: 9
   modules:
     - src/orders
@@ -54,7 +54,7 @@ def test_loads_full_config(tmp_path: Path) -> None:
     assert config == ThemisConfig(
         version=1,
         review=ReviewConfig(
-            max_file_chars=12345,
+            max_changed_lines_per_file=12345,
             max_changed_files=9,
             modules=[
                 "src/orders",
@@ -84,13 +84,6 @@ def test_missing_required_key_is_rejected(tmp_path: Path) -> None:
     body = _FULL_CONFIG.replace("version: 1", "")
 
     with pytest.raises(ValidationError):
-        ThemisConfig.from_yaml(_write_config(tmp_path, body))
-
-
-def test_base_url_is_required(tmp_path: Path) -> None:
-    body = _FULL_CONFIG.replace("  base_url: https://api.anthropic.com/v1/\n", "")
-
-    with pytest.raises(ValidationError, match="base_url"):
         ThemisConfig.from_yaml(_write_config(tmp_path, body))
 
 

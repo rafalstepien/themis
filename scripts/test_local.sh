@@ -1,6 +1,6 @@
 #!/bin/bash
 # Local testing script - Simulates GitLab CI environment
-# .env.test defines project (themis-example)
+# .env.test defines project (themis-sandbox)
 #           and mr ->  
 
 set -e
@@ -25,10 +25,10 @@ source "$ENV_FILE"
 set +a
 
 # Anchor the review to a real checkout of the consumer repo, exactly as GitLab
-# does via CI_PROJECT_DIR. Defaults to the sibling themis-example checkout; the
+# does via CI_PROJECT_DIR. Defaults to the sibling themis-sandbox checkout; the
 # engine still runs from the themis repo (its own venv) but reads .themis-ai/
 # config, rules and architecture from here — no copying required.
-export CI_PROJECT_DIR="${TARGET_REPO:-${CI_PROJECT_DIR:-$HOME/repos/sandbox/themis-repos/themis-example}}"
+export CI_PROJECT_DIR="${TARGET_REPO:-${CI_PROJECT_DIR:-$HOME/repos/sandbox/themis-repos/themis-sandbox}}"
 
 if [[ ! -f "$CI_PROJECT_DIR/.themis-ai/config.yaml" ]]; then
     echo "❌ Error: no .themis-ai/config.yaml under CI_PROJECT_DIR=$CI_PROJECT_DIR"

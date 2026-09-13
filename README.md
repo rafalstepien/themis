@@ -125,9 +125,9 @@ Themis reads a `config.yml` committed to the reviewed repository:
 version: 1
 
 review:
-  max_file_chars: 60000   # skip files larger than this
-  max_changed_files: 50   # skip the MR entirely if it changes more files than this
-  modules:                # the modules that make up your repo
+  max_changed_lines_per_file: 800   # skip files whose diff adds/removes more lines than this
+  max_changed_files: 50             # skip the MR entirely if it changes more files than this
+  modules:                          # the modules that make up your repo
     - src/accounts/
     - src/catalog/
     - src/orders/

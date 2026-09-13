@@ -2,47 +2,29 @@ import pytest
 
 from src.review_engine.adapters.outbound.gitlab.dto import (
     DiffRefsDTO,
-    FileContents,
     FileDiffDTO,
 )
-from src.review_engine.adapters.outbound.gitlab.mappers import to_domain
+from src.review_engine.adapters.outbound.gitlab.mappers import mr_to_domain
 from src.review_engine.domain.models import ChangeType, DiffRefs
 
 from .factories import FileDiffDTOFactory, MergeRequestDTOFactory
-
-TEST_FILE_CONTENTS = {"new-path": FileContents(new="new", old="old")}
 
 
 def test_map_to_domain_object():
     dto = MergeRequestDTOFactory.build()
 
-    domain_mr = to_domain(dto, TEST_FILE_CONTENTS)
+    domain_mr = mr_to_domain(dto)
 
     assert domain_mr
     assert domain_mr.files[0].change_type == ChangeType.MODIFIED
     assert domain_mr.diff_refs is None
 
 
-def test_map_to_domain_object__none_content():
-    file_diff = FileDiffDTOFactory.build()
-    dto = MergeRequestDTOFactory.build(changes=[file_diff])
-    file_contents = {
-        "new-path": FileContents(
-            old=None,
-            new=None,
-        )
-    }
-
-    domain_mr = to_domain(dto, file_contents)
-    assert domain_mr.files[0].old_content == ""
-    assert domain_mr.files[0].new_content == ""
-
-
 def test_map_to_domain_object__maps_diff_refs():
     diff_refs = DiffRefsDTO(base_sha="base", start_sha="start", head_sha="head")
     dto = MergeRequestDTOFactory.build(diff_refs=diff_refs)
 
-    domain_mr = to_domain(dto, TEST_FILE_CONTENTS)
+    domain_mr = mr_to_domain(dto)
 
     assert domain_mr.diff_refs == DiffRefs(base_sha="base", start_sha="start", head_sha="head")
 
@@ -92,6 +74,6 @@ def test_map_to_domain_object__maps_change_type(
 ):
     dto = MergeRequestDTOFactory.build(changes=[file_diff_dto])
 
-    domain_mr = to_domain(dto, TEST_FILE_CONTENTS)
+    domain_mr = mr_to_domain(dto)
 
     assert domain_mr.files[0].change_type == expected_change_type

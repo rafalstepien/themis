@@ -11,6 +11,9 @@ from src.review_engine.domain.models import (
     ReviewComment,
 )
 
+EXAMPLE_DIFF_REFFS = DiffRefs("base", "start", "head")
+EXAMPLE_COMMENT_ANCHOR = CommentAnchor(new_path="a.py", old_path="a.py", new_line=10, old_line=10)
+
 
 def test_format_body_without_references_is_just_content():
     comment = ReviewComment(content="A plain logic bug.", references=[])
@@ -103,10 +106,10 @@ def test_post_inline_comment_includes_old_line_for_context_line(mock_post):
     comment = ReviewComment(
         content="context",
         references=[],
-        anchor=CommentAnchor(new_path="a.py", old_path="a.py", new_line=10, old_line=10),
+        anchor=EXAMPLE_COMMENT_ANCHOR,
     )
 
-    _client().post_inline_comment(comment, DiffRefs("base", "start", "head"))
+    _client().post_inline_comment(comment, EXAMPLE_DIFF_REFFS)
 
     position = mock_post.call_args.kwargs["json"]["position"]
     assert position["new_line"] == 10
@@ -117,4 +120,16 @@ def test_post_inline_comment_requires_anchor():
     comment = ReviewComment(content="no anchor", references=[])
 
     with pytest.raises(ValueError):
-        _client().post_inline_comment(comment, DiffRefs("base", "start", "head"))
+        _client().post_inline_comment(comment, EXAMPLE_DIFF_REFFS)
+
+
+def test_post_general_comment_no_body(caplog: pytest.LogCaptureFixture):
+    comment = ReviewComment(content="", references=[])
+    assert _client().post_general_comment(comment) is None
+    assert "Skipping empty review comment for MR 7" in caplog.text
+
+
+def test_post_inline_comment_no_body(caplog: pytest.LogCaptureFixture):
+    comment = ReviewComment(content="", references=[], anchor=EXAMPLE_COMMENT_ANCHOR)
+    assert _client().post_inline_comment(comment, EXAMPLE_DIFF_REFFS) is None
+    assert "Skipping empty review comment for MR 7" in caplog.text

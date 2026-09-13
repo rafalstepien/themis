@@ -4,16 +4,23 @@ from urllib.parse import quote
 
 import httpx
 
-from src.review_engine.domain.models import CommentAnchor, DiffRefs, MergeRequest, ReviewComment
+from src.review_engine.domain.models import (
+    CommentAnchor,
+    DiffRefs,
+    MergeRequest,
+    MRComments,
+    ReviewComment,
+)
 from src.review_engine.ports.outbound import GitLabPort
 
 from .dto import (
-    FileContents,
-    GitLabFileResponse,
+    GitLabFileResponseDTO,
+    GitLabNotesResponseDTO,
     MergeRequestDTO,
+    TokenOwnerIdentityDTO,
 )
 from .exceptions import handle_gitlab_api_errors, handle_gitlab_data_errors
-from .mappers import to_domain
+from .mappers import mr_comments_to_domain, mr_to_domain, token_owner_to_domain
 
 logger = logging.getLogger(__name__)
 
@@ -54,35 +61,41 @@ class GitLabClient(GitLabPort):
             f"{self.BASE_API_URL}/projects/{self.project_id}"
             f"/merge_requests/{self.mr_iid}/discussions"
         )
-        payload = {"body": body, "position": self._build_position(comment.anchor, diff_refs)}
+        payload = {
+            "body": body,
+            "position": self._build_position(comment.anchor, diff_refs),
+        }
 
         with handle_gitlab_api_errors(self.mr_iid):
             response = self._client.post(url, json=payload)
             response.raise_for_status()
 
     def get_mr_data(self) -> MergeRequest:
-        dto = self._get_merge_request()
-        file_contents = {
-            c.new_path: FileContents(
-                old=""
-                if c.new_file
-                else self._get_branch_file_content(c.old_path, dto.target_branch),
-                new=""
-                if c.deleted_file
-                else self._get_branch_file_content(c.new_path, dto.source_branch),
-            )
-            for c in dto.changes
-        }
-        return to_domain(dto, file_contents)
-
-    def _get_merge_request(self) -> MergeRequestDTO:
         url = f"{self.BASE_API_URL}/projects/{self.project_id}/merge_requests/{self.mr_iid}/changes"
 
         with handle_gitlab_api_errors(self.mr_iid):
             response = self._client.get(url)
             response.raise_for_status()
 
-        return MergeRequestDTO.model_validate(response.json())
+        return mr_to_domain(MergeRequestDTO.model_validate(response.json()))
+
+    def get_token_owner_details(self):
+        url = f"{self.BASE_API_URL}/user"
+
+        with handle_gitlab_api_errors(self.mr_iid):
+            response = self._client.get(url)
+            response.raise_for_status()
+
+        return token_owner_to_domain(TokenOwnerIdentityDTO(**response.json()))
+
+    def get_mr_comments(self) -> MRComments:
+        url = f"{self.BASE_API_URL}/projects/{self.project_id}/merge_requests/{self.mr_iid}/notes?per_page=100"
+
+        with handle_gitlab_api_errors(self.mr_iid):
+            response = self._client.get(url)
+            response.raise_for_status()
+
+        return mr_comments_to_domain(GitLabNotesResponseDTO(notes=response.json()))
 
     def _get_branch_file_content(self, file_path: str, branch: str) -> str:
         """Fetch raw file content from a specific branch, decoding base64. Returns empty string for missing files."""
@@ -96,7 +109,7 @@ class GitLabClient(GitLabPort):
             response.raise_for_status()
 
         with handle_gitlab_data_errors():
-            data = GitLabFileResponse(**response.json())
+            data = GitLabFileResponseDTO(**response.json())
 
         if data.encoding == "base64":
             return base64.b64decode(data.content).decode("utf-8")
@@ -129,7 +142,7 @@ class GitLabClient(GitLabPort):
         if not comment.references:
             return comment.content
         references = "\n".join(
-            f'- `{ref.file_path}` — "{ref.rule}"' if ref.rule else f"- `{ref.file_path}`"
+            (f'- `{ref.file_path}` — "{ref.rule}"' if ref.rule else f"- `{ref.file_path}`")
             for ref in comment.references
         )
         return f"{comment.content}\n\n**References:**\n{references}"

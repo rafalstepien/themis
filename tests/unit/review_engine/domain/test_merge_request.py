@@ -1,39 +1,57 @@
+import pytest
+
 from src.bootstrap.config import ReviewConfig
-from tests.unit.review_engine.domain.factories import ChangedFileFactory, MergeRequestFactory
+from src.review_engine.domain.models import ChangedFile
+from tests.unit.review_engine.domain.factories import (
+    EXAMPLE_DIFF_WITH_SIX_LINES_CHANGED,
+    ChangedFileFactory,
+    MergeRequestFactory,
+)
 
-TEST_CONFIG = ReviewConfig(max_changed_files=2)
-
-
-def test_should_be_reviewed_happy_path():
-    mr = MergeRequestFactory.build()
-    assert mr.should_be_reviewed(TEST_CONFIG)
-
-
-def test_should_be_reviewed_happy_path_on_max():
-    mr = MergeRequestFactory.build(
-        files=[
-            ChangedFileFactory.build(),
-            ChangedFileFactory.build(),
-        ]
-    )
-
-    assert mr.should_be_reviewed(TEST_CONFIG)
+MAX_CHANGED_FILES = 2
 
 
-def test_should_be_reviewed_returns_false_when_files_array_empty():
-    mr = MergeRequestFactory.build(files=[])
-    assert not mr.should_be_reviewed(TEST_CONFIG)
+@pytest.mark.parametrize(
+    ["files", "should_be_reviewed"],
+    [
+        pytest.param(
+            [ChangedFileFactory.build()], True, id="Number of changed files less than max"
+        ),
+        pytest.param(
+            [ChangedFileFactory.build(), ChangedFileFactory.build()],
+            True,
+            id="Number of changed files equal to max",
+        ),
+        pytest.param(
+            [ChangedFileFactory.build(), ChangedFileFactory.build(), ChangedFileFactory.build()],
+            False,
+            id="Number of changed files exceeds max",
+        ),
+        pytest.param([], False, id="No files"),
+    ],
+)
+def test_should_be_reviewed_variable_number_of_files(
+    files: list[ChangedFile], should_be_reviewed: bool
+):
+    mr = MergeRequestFactory.build(files=files)
+    assert mr.should_be_reviewed(MAX_CHANGED_FILES) is should_be_reviewed
 
 
-def test_should_be_reviewed_returns_false_when_too_much_files_changed():
-    mr = MergeRequestFactory.build(
-        files=[
-            ChangedFileFactory.build(),
-            ChangedFileFactory.build(),
-            ChangedFileFactory.build(),
-        ]
-    )
-    assert not mr.should_be_reviewed(TEST_CONFIG)
+def test_remove_files_that_are_too_big():
+    files = [
+        ChangedFileFactory.build(raw_diff=EXAMPLE_DIFF_WITH_SIX_LINES_CHANGED),
+        ChangedFileFactory.build(),
+        ChangedFileFactory.build(raw_diff=EXAMPLE_DIFF_WITH_SIX_LINES_CHANGED),
+        ChangedFileFactory.build(),
+        ChangedFileFactory.build(raw_diff=EXAMPLE_DIFF_WITH_SIX_LINES_CHANGED),
+    ]
+    mr = MergeRequestFactory.build(files=files)
+
+    assert len(mr.files) == 5
+
+    mr.remove_too_big_files(max_changed_lines_per_file=5)
+
+    assert len(mr.files) == 2
 
 
 MODULES_CONFIG = ReviewConfig(modules=["src/orders", "src/engine", "helpers/logging"])

@@ -7,4 +7,4 @@ class BestPracticesClient(BestPracticesPort):
         1. Identify best practices to check based on changed files
         2. Load applicable best practices from src/best_practices
         """
-        return {}
+        raise NotImplementedError

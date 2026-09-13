@@ -31,17 +31,32 @@ class ReviewOrchestrator:
         self.module_context_port = module_context_port
 
     def execute(self):
+        """
+        1. Fetch base MR data and exclude MR and/or individual files from review
+        2. Fetch file contents only for the relevant files
+        3. Gather additional context for analysis
+        4. Send to LLM for code review
+        5. Post comments
+        """
         mr = self.gitlab_port.get_mr_data()
 
-        if not mr.should_be_reviewed(self.review_config):
+        mr.remove_too_big_files(self.review_config.max_changed_lines_per_file)
+        if not mr.should_be_reviewed(self.review_config.max_changed_files):
             return
 
         modules = mr.affected_modules(self.review_config)
         past_mr_rules = self.module_context_port.load_rules(modules)
         architecture = self.module_context_port.load_architecture(modules)
         business_context = None
-        technologies = self._get_technologies()
-        best_practices_context = self.best_practices_port.load_best_practices(technologies)
+
+        token_owner_details = self.gitlab_port.get_token_owner_details()
+        mr_comments = self.gitlab_port.get_mr_comments()
+
+        if mr_comments.code_review_already_performed(token_owner_details):
+            logger.info("Code review was already executed. Exiting ...")
+            return
+
+        best_practices_context = {}
 
         analysis_context = AnalysisContext(
             past_mr_rules=past_mr_rules,
@@ -62,9 +77,6 @@ class ReviewOrchestrator:
                 self.gitlab_port.post_inline_comment(comment, mr.diff_refs)
             else:
                 self.gitlab_port.post_general_comment(comment)
-
-    def _get_technologies(self) -> list:
-        return list()
 
     @staticmethod
     def _log_loaded_context(modules: list[str], context: AnalysisContext) -> None:

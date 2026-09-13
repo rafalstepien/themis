@@ -20,7 +20,7 @@ class OpenAICompatibleClient(_StructuredOutputLLMClient):
     Talks to any OpenAI-compatible server (self-hosted vLLM/LM Studio, or hosted OSS providers).
     """
 
-    def __init__(self, model: str, base_url: str, token: str | None = None):
+    def __init__(self, model: str, base_url: str | None, token: str | None = None):
         super().__init__(model)
         self._client = OpenAI(base_url=base_url, api_key=token or _PLACEHOLDER_API_KEY)
 

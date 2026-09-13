@@ -1,9 +1,25 @@
-from src.review_engine.domain.models import ChangedFile, ChangeType, DiffRefs, MergeRequest
+from src.review_engine.domain.models import (
+    ChangedFile,
+    ChangeType,
+    DiffRefs,
+    MergeRequest,
+    MRComment,
+    MRCommentAuthor,
+    MRComments,
+    TokenOwner,
+)
 
-from .dto import DiffRefsDTO, FileContents, MergeRequestDTO
+from .dto import (
+    DiffRefsDTO,
+    GitLabNotesResponseDTO,
+    MergeRequestDTO,
+    TokenOwnerIdentityDTO,
+)
 
 
-def to_domain(dto: MergeRequestDTO, file_contents: dict[str, FileContents]) -> MergeRequest:
+def mr_to_domain(
+    dto: MergeRequestDTO,
+) -> MergeRequest:
     return MergeRequest.create(
         mr_id=str(dto.iid),
         target_branch=dto.target_branch,
@@ -14,10 +30,10 @@ def to_domain(dto: MergeRequestDTO, file_contents: dict[str, FileContents]) -> M
             ChangedFile(
                 new_path=c.new_path,
                 old_path=c.old_path,
-                new_content=file_contents[c.new_path].new or "",
-                old_content=file_contents[c.new_path].old or "",
                 raw_diff=c.diff,
                 change_type=_infer_change_type(c.new_file, c.renamed_file, c.deleted_file),
+                generated_file=c.generated_file,
+                too_large=c.too_large,
             )
             for c in dto.changes
         ],
@@ -43,3 +59,29 @@ def _to_diff_refs(dto: DiffRefsDTO | None) -> DiffRefs | None:
     if dto is None:
         return None
     return DiffRefs(base_sha=dto.base_sha, start_sha=dto.start_sha, head_sha=dto.head_sha)
+
+
+def mr_comments_to_domain(dto: GitLabNotesResponseDTO) -> MRComments:
+    return MRComments(
+        comments=[
+            MRComment(
+                id=c.id,
+                system=c.system,
+                author=MRCommentAuthor(
+                    id=c.author.id,
+                    username=c.author.username,
+                    name=c.author.name,
+                ),
+            )
+            for c in dto.notes
+        ]
+    )
+
+
+def token_owner_to_domain(dto: TokenOwnerIdentityDTO) -> TokenOwner:
+    return TokenOwner(
+        id=dto.id,
+        username=dto.username,
+        name=dto.name,
+        email=dto.email,
+    )

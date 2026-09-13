@@ -1,6 +1,12 @@
 from abc import ABC, abstractmethod
 
-from src.review_engine.domain.models import DiffRefs, MergeRequest, ReviewComment
+from src.review_engine.domain.models import (
+    DiffRefs,
+    MergeRequest,
+    MRComments,
+    ReviewComment,
+    TokenOwner,
+)
 
 
 class GitLabPort(ABC):
@@ -27,3 +33,9 @@ class GitLabPort(ABC):
 
     @abstractmethod
     def get_file_content(self) -> str: ...
+
+    @abstractmethod
+    def get_mr_comments(self) -> MRComments: ...
+
+    @abstractmethod
+    def get_token_owner_details(self) -> TokenOwner: ...

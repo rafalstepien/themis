@@ -2,7 +2,7 @@ from enum import StrEnum
 import logging
 from pathlib import Path
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -32,20 +32,27 @@ class LLMDeploymentType(StrEnum):
 
 
 class ReviewConfig(BaseModel):
-    max_file_chars: int = Field(default=60_000)
+    max_changed_lines_per_file: int = Field(default=800)
     max_changed_files: int = Field(default=50)
     modules: list[str] = Field(default_factory=list)
     # TODO: add parameter controlling whether to include business context
 
 
 class LLMConfig(BaseModel):
-    deployment_type: LLMDeploymentType
+    deployment_type: LLMDeploymentType = LLMDeploymentType.CLOUD
     model: str
-    base_url: str
+    base_url: str | None = None
 
     @property
     def requires_token(self) -> bool:
         return self.deployment_type is LLMDeploymentType.CLOUD
+
+    @model_validator(mode="after")
+    def validate_config(self):
+        if self.deployment_type == LLMDeploymentType.SELF_HOSTED:
+            if not self.base_url:
+                raise ValueError("base_url is required for self-hosted deployments")
+        return self
 
 
 class ThemisConfig(BaseModel):

@@ -15,10 +15,10 @@ tasks:
       - uv run python3 -m pytest -vvs tests/unit
 
   run-single-unit-test:
-    desc: Run one unit test by passing the test name (task unit-test-single -- TEST_NAME)
+    desc: Run one unit test by passing the test name (task run-single-unit-test -- TEST_NAME)
     summary: |
       Pass the test name after `--`. 
-      Example: task unit-test-single -- test_my_feature
+      Example: task run-single-unit-test -- test_my_feature
     cmds:
       - uv run python3 -m pytest -vvs tests/unit -k "{{.CLI_ARGS}}"
 

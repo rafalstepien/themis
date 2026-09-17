@@ -11,7 +11,7 @@
 
 ---
 
-> **Status: 0.1.0:** the core review pipeline works end-to-end. AST precision, extra LLM adapters, and the indexer are on the roadmap. Built in public. Follow along. ⭐
+> **Status: 0.2.0:** the core review pipeline works end-to-end. AST precision, extra LLM adapters, and the indexer are on the roadmap. Built in public. Follow along. ⭐
 
 ---
 

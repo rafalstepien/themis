@@ -28,7 +28,7 @@ Themis posts review comments directly inside your GitLab Merge Requests. The fas
 
 ## Status (extended)
 
-### What works now (0.1.0)
+### What works now (0.2.0)
 
 - ✅ **End-to-end pipeline** — include `themis-ci` in your CI pipeline and it runs on every Merge Request, posting comments automatically.
 - ✅ **OpenAI integration** — use any OpenAI model under the BYOK (Bring-Your-Own-Key) model.
@@ -38,7 +38,6 @@ Themis posts review comments directly inside your GitLab Merge Requests. The fas
 - ✅ **Module inference** — once configured, Themis identifies which modules a Merge Request touches and scopes the review accordingly.
 
 ### On the roadmap
-
 - Async requests, retries, rules on when to re-run Code Review
 - AST-native engine for byte-offset-grounded comments
 - Additional LLM adapters: LiteLLM, and native (non-compat) provider APIs
@@ -50,8 +49,6 @@ Themis posts review comments directly inside your GitLab Merge Requests. The fas
 - An indexer that generates per-repository rules from historical MR discussions
 - Scheduling indexer as a recurring job in the repo
 - Add support for GitHub so that we can use themis to review our own pull requests
-
-For detailed milestone definitions, see [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Why Themis?
 
@@ -96,7 +93,7 @@ Add the component to your `.gitlab-ci.yml`:
 
 ```yaml
 include:
-  - component: gitlab.com/rafalstepien/themis-ci/themis-ci@0.1.0
+  - component: gitlab.com/rafalstepien/themis-ci/themis-ci@0.2.0
 
 stages:
   - review

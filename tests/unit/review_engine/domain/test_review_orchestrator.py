@@ -141,3 +141,26 @@ def test_execute__does_not_rerun_code_review_when_already_present(gitlab_client_
 
     llm_client_mock.assert_not_called()
     assert "Code review was already executed. Exiting ..." in caplog.text
+
+
+def test_execute__skips_cohorts_comment_when_configured(gitlab_client_mock: Mock):
+    llm_client_mock = Mock()
+
+    review_mock = Mock()
+    review_mock.comments = []
+    review_mock.cohorts = []
+    llm_client_mock.generate_code_review.return_value = review_mock
+
+    o = ReviewOrchestrator(
+        review_config=ReviewConfig(skip_cohorts_comment=True),
+        gitlab_port=gitlab_client_mock,
+        llm_port=llm_client_mock,
+        business_context_port=Mock(),
+        best_practices_port=Mock(),
+        module_context_port=Mock(),
+    )
+
+    o.execute()
+
+    gitlab_client_mock.post_general_comment.assert_not_called()
+    review_mock.build_general_cohort_comment.assert_not_called()

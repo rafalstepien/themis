@@ -44,7 +44,7 @@ class CodeReviewResponseDTO(BaseModel):
     business_requirements_matrix: list[BusinessRequirementDTO]
     code_review_comments: list[CommentDTO]
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
     def unwrap_parameters(cls, data: dict) -> dict:
         if isinstance(data, dict) and "parameters" in data and isinstance(data["parameters"], dict):

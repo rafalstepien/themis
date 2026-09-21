@@ -16,6 +16,7 @@ review:
     - src/orders
     - src/engine
     - helpers/logging
+  skip_cohorts_comment: true
 
 llm:
   deployment_type: cloud
@@ -61,6 +62,7 @@ def test_loads_full_config(tmp_path: Path) -> None:
                 "src/engine",
                 "helpers/logging",
             ],
+            skip_cohorts_comment=True,
         ),
         llm=LLMConfig(
             deployment_type=LLMDeploymentType.CLOUD,

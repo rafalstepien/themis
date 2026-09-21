@@ -158,6 +158,9 @@ return an empty `references` list for that comment.
 
 **Bad comment example (do NOT produce):**
 { "content": "Consider renaming `amt` to `amount` for clarity." }   ← linter/style nit, out of scope
+
+There might be a situation, when there are no additional comments to be made in the Merge Request, and the proposed changes are good enough. In such scenario
+respond with empty code_review_comments list (`[]`)
 """
 
 _MATRIX_INSTRUCTION_ENABLED = """\

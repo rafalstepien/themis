@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class CohortChangeDTO(BaseModel):
@@ -43,3 +43,10 @@ class CodeReviewResponseDTO(BaseModel):
     cohorts: list[CohortDTO]
     business_requirements_matrix: list[BusinessRequirementDTO]
     code_review_comments: list[CommentDTO]
+
+    @model_validator(mode="before")
+    @classmethod
+    def unwrap_parameters(cls, data: dict) -> dict:
+        if isinstance(data, dict) and "parameters" in data and isinstance(data["parameters"], dict):
+            return data["parameters"]
+        return data

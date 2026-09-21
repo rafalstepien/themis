@@ -35,6 +35,7 @@ class ReviewConfig(BaseModel):
     max_changed_lines_per_file: int = Field(default=800)
     max_changed_files: int = Field(default=50)
     modules: list[str] = Field(default_factory=list)
+    skip_cohorts_comment: bool = Field(default=False)
     # TODO: add parameter controlling whether to include business context
 
 

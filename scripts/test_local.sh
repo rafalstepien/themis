@@ -5,9 +5,10 @@
 
 set -e
 
+CI_PROJECT_DIR=$1
+ENV_FILE="$CI_PROJECT_DIR/.env.test"
+
 SCRIPT_DIR=$(pwd)
-REPO_ROOT="$HOME/repos/sandbox/themis-repos/themis"
-ENV_FILE="$REPO_ROOT/env_files/.env.test"
 
 if [[ ! -f "$ENV_FILE" ]]; then
     echo "❌ Error: .env.test not found"
@@ -28,7 +29,6 @@ set +a
 # does via CI_PROJECT_DIR. Defaults to the sibling themis-sandbox checkout; the
 # engine still runs from the themis repo (its own venv) but reads .themis-ai/
 # config, rules and architecture from here — no copying required.
-export CI_PROJECT_DIR="${TARGET_REPO:-${CI_PROJECT_DIR:-$HOME/repos/sandbox/themis-repos/themis-sandbox}}"
 
 if [[ ! -f "$CI_PROJECT_DIR/.themis-ai/config.yaml" ]]; then
     echo "❌ Error: no .themis-ai/config.yaml under CI_PROJECT_DIR=$CI_PROJECT_DIR"

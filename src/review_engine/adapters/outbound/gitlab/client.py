@@ -11,7 +11,7 @@ from src.review_engine.domain.models import (
     MRComments,
     ReviewComment,
 )
-from src.review_engine.ports.outbound import GitLabPort
+from src.review_engine.ports.outbound import GitProviderPort
 
 from .dto import (
     GitLabFileResponseDTO,
@@ -25,7 +25,7 @@ from .mappers import mr_comments_to_domain, mr_to_domain, token_owner_to_domain
 logger = logging.getLogger(__name__)
 
 
-class GitLabClient(GitLabPort):
+class GitLabClient(GitProviderPort):
     BASE_API_URL = "https://gitlab.com/api/v4"
 
     def __init__(self, token: str, project_id: str, mr_iid: int):
@@ -142,7 +142,11 @@ class GitLabClient(GitLabPort):
         if not comment.references:
             return comment.content
         references = "\n".join(
-            (f'- `{ref.file_path}` — "{ref.rule}"' if ref.rule else f"- `{ref.file_path}`")
+            (
+                f'- `{ref.file_path}` — "{ref.rule}"'
+                if ref.rule
+                else f"- `{ref.file_path}`"
+            )
             for ref in comment.references
         )
         return f"{comment.content}\n\n**References:**\n{references}"

@@ -5,7 +5,7 @@ from src.review_engine.domain.models import AnalysisContext
 from src.review_engine.ports.outbound import (
     BestPracticesPort,
     BusinessContextPort,
-    GitLabPort,
+    GitProviderPort,
     LLMPort,
     ModuleContextPort,
 )
@@ -17,13 +17,13 @@ class ReviewOrchestrator:
     def __init__(
         self,
         review_config: ReviewConfig,
-        gitlab_port: GitLabPort,
+        git_provider_port: GitProviderPort,
         llm_port: LLMPort,
         business_context_port: BusinessContextPort,
         best_practices_port: BestPracticesPort,
         module_context_port: ModuleContextPort,
     ):
-        self.gitlab_port = gitlab_port
+        self.git_provider_port = git_provider_port
         self.llm_port = llm_port
         self.business_context_port = business_context_port
         self.best_practices_port = best_practices_port
@@ -38,7 +38,7 @@ class ReviewOrchestrator:
         4. Send to LLM for code review
         5. Post comments
         """
-        mr = self.gitlab_port.get_mr_data()
+        mr = self.git_provider_port.get_mr_data()
 
         mr.remove_too_big_files(self.review_config.max_changed_lines_per_file)
         if not mr.should_be_reviewed(self.review_config.max_changed_files):
@@ -49,8 +49,8 @@ class ReviewOrchestrator:
         architecture = self.module_context_port.load_architecture(modules)
         business_context = None
 
-        token_owner_details = self.gitlab_port.get_token_owner_details()
-        mr_comments = self.gitlab_port.get_mr_comments()
+        token_owner_details = self.git_provider_port.get_token_owner_details()
+        mr_comments = self.git_provider_port.get_mr_comments()
 
         if mr_comments.code_review_already_performed(token_owner_details):
             logger.info("Code review was already executed. Exiting ...")
@@ -70,14 +70,13 @@ class ReviewOrchestrator:
         if not self.review_config.skip_cohorts_comment:
             cohorts_comment = review.build_general_cohort_comment()
             if cohorts_comment:
-                self.gitlab_port.post_general_comment(cohorts_comment)
+                self.git_provider_port.post_general_comment(cohorts_comment)
 
-        # TODO: Add POST for cohorts with nice formatting
         for comment in review.comments:
             if comment.anchor is not None and mr.diff_refs is not None:
-                self.gitlab_port.post_inline_comment(comment, mr.diff_refs)
+                self.git_provider_port.post_inline_comment(comment, mr.diff_refs)
             else:
-                self.gitlab_port.post_general_comment(comment)
+                self.git_provider_port.post_general_comment(comment)
 
     @staticmethod
     def _log_loaded_context(modules: list[str], context: AnalysisContext) -> None:

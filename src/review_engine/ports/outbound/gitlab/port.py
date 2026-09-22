@@ -9,7 +9,7 @@ from src.review_engine.domain.models import (
 )
 
 
-class GitLabPort(ABC):
+class GitProviderPort(ABC):
     @abstractmethod
     def get_mr_data(self) -> MergeRequest:
         """Fetch merge request data including all file changes from GitLab API."""

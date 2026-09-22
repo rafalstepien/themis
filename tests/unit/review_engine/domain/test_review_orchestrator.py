@@ -31,7 +31,7 @@ def test_execute__not_reviewable_mr(gitlab_client_mock: Mock):
 
     o = ReviewOrchestrator(
         review_config=Mock(),
-        gitlab_port=gitlab_client_mock,
+        git_provider_port=gitlab_client_mock,
         llm_port=llm_client_mock,
         business_context_port=Mock(),
         best_practices_port=Mock(),
@@ -54,7 +54,7 @@ def test_execute__unanchored_comments_posted_as_general(gitlab_client_mock: Mock
 
     o = ReviewOrchestrator(
         review_config=ReviewConfig(),
-        gitlab_port=gitlab_client_mock,
+        git_provider_port=gitlab_client_mock,
         llm_port=llm_client_mock,
         business_context_port=Mock(),
         best_practices_port=Mock(),
@@ -80,7 +80,7 @@ def test_execute__anchored_comment_posted_inline_with_diff_refs(gitlab_client_mo
 
     o = ReviewOrchestrator(
         review_config=ReviewConfig(),
-        gitlab_port=gitlab_client_mock,
+        git_provider_port=gitlab_client_mock,
         llm_port=llm_client_mock,
         business_context_port=Mock(),
         best_practices_port=Mock(),
@@ -99,7 +99,7 @@ def test_execute__review_with_no_comments(gitlab_client_mock: Mock):
 
     o = ReviewOrchestrator(
         review_config=ReviewConfig(),
-        gitlab_port=gitlab_client_mock,
+        git_provider_port=gitlab_client_mock,
         llm_port=llm_client_mock,
         business_context_port=Mock(),
         best_practices_port=Mock(),
@@ -129,7 +129,7 @@ def test_execute__does_not_rerun_code_review_when_already_present(gitlab_client_
 
     o = ReviewOrchestrator(
         review_config=ReviewConfig(),
-        gitlab_port=gitlab_client_mock,
+        git_provider_port=gitlab_client_mock,
         llm_port=llm_client_mock,
         business_context_port=Mock(),
         best_practices_port=Mock(),
@@ -153,7 +153,7 @@ def test_execute__skips_cohorts_comment_when_configured(gitlab_client_mock: Mock
 
     o = ReviewOrchestrator(
         review_config=ReviewConfig(skip_cohorts_comment=True),
-        gitlab_port=gitlab_client_mock,
+        git_provider_port=gitlab_client_mock,
         llm_port=llm_client_mock,
         business_context_port=Mock(),
         best_practices_port=Mock(),

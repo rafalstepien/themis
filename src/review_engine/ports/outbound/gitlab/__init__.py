@@ -1,4 +1,4 @@
 from .exceptions import GitLabPortError
-from .port import GitLabPort
+from .port import GitProviderPort
 
-__all__ = ["GitLabPort", "GitLabPortError"]
+__all__ = ["GitProviderPort", "GitLabPortError"]

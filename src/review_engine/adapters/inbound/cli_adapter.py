@@ -49,7 +49,7 @@ class ReviewEngineCLIAdapter:
 
         orchestrator = ReviewOrchestrator(
             review_config=config.review,
-            gitlab_port=gitlab_client,
+            git_provider_port=gitlab_client,
             llm_port=llm_client,
             business_context_port=JiraClient(token=secrets.jira_token),
             best_practices_port=BestPracticesClient(),

@@ -41,16 +41,6 @@ tasks:
     cmds:
       - uv run ruff check && uv run ruff format --check && uv run ty check
 
-  run-engine:
-    desc: Run AI Code Review Engine
-    cmds:
-      - uv run main.py
-  
-  run-indexer:
-    desc: Run repo indexer
-    cmds:
-      - echo "Run indexer"
-
   build-image:
     desc: Build the Docker image locally (tagged as themis:dev)
     cmds:

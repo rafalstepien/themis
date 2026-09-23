@@ -1,10 +1,7 @@
-from enum import StrEnum
 import logging
 import os
 
-import click
-
-from src.review_engine.adapters.inbound.cli_adapter import ReviewEngineCLIAdapter
+from src.engine.adapters.inbound import GitHubCLIAdapter, GitLabCLIAdapter
 
 
 def _configure_logging() -> None:
@@ -20,22 +17,9 @@ def _configure_logging() -> None:
     )
 
 
-class RunMode(StrEnum):
-    ENGINE = "engine"
-    INDEXER = "indexer"
-
-
-@click.command()
-@click.option(
-    "--mode", default="engine", help="The mode in which the script is run (engine | indexer)"
-)
-def main(mode: str):
+def main(git_provider: str):
     _configure_logging()
-    if mode == RunMode.ENGINE:
-        ReviewEngineCLIAdapter().run()
-    elif mode == RunMode.INDEXER:
-        raise NotImplementedError
-
-
-if __name__ == "__main__":
-    main()
+    if git_provider == "gitlab":
+        GitLabCLIAdapter().run()
+    if git_provider == "github":
+        GitHubCLIAdapter().run()

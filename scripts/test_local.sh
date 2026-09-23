@@ -43,5 +43,4 @@ echo "   MR ID: $CI_MERGE_REQUEST_IID"
 echo "   Branch: $CI_MERGE_REQUEST_SOURCE_BRANCH → $CI_MERGE_REQUEST_TARGET_BRANCH"
 echo ""
 
-# Call the engine via task
-task run-engine
+uv run main.py gitlab

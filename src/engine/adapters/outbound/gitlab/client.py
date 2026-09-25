@@ -146,6 +146,3 @@ class GitLabClient(GitProviderPort):
             for ref in comment.references
         )
         return f"{comment.content}\n\n**References:**\n{references}"
-
-    def get_file_content(self) -> str:
-        return ""

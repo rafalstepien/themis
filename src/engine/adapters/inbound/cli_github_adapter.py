@@ -48,9 +48,9 @@ class GitHubCLIAdapter:
         try:
             orchestrator.execute()
         except GitProviderPortError:
-            logger.exception("GitLab interaction failed")
+            logger.exception("GitHub interaction failed")
             logger.error(
-                "Error: could not complete the review — GitLab is unavailable or returned unexpected data."
+                "Error: could not complete the review — GitHub is unavailable or returned unexpected data."
             )
             sys.exit(1)
         except LLMPortError:

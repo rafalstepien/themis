@@ -28,7 +28,7 @@ class _StructuredOutputLLMClient(LLMPort, ABC):
         system_prompt = build_system_prompt(has_business_context)
         user_prompt = build_user_prompt(mr, context)
 
-        logger.info("Sending review request to LLM model %s", self.model)
+        logger.info("Sending review request to LLM model %s ...", self.model)
         logger.debug(
             "LLM request payload:\n"
             "----- SYSTEM PROMPT -----\n%s\n"

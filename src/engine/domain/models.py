@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class AnalysisContext:
     """
-    Sourced from rules.json, architecture.json, Jira API and repo-maintained best practices.
+    Sourced from rules.json, architecture.json, and Jira API.
     """
 
     past_mr_rules: dict | None = None

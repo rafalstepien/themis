@@ -36,9 +36,6 @@ class GitProviderPort(ABC):
         ...
 
     @abstractmethod
-    def get_file_content(self) -> str: ...
-
-    @abstractmethod
     def get_mr_comments(self) -> MRComments: ...
 
     @abstractmethod

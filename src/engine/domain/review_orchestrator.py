@@ -91,7 +91,7 @@ class ReviewOrchestrator:
 
         logger.info(
             "Loaded context for modules %s | architecture rules: %s | past-MR rules: %s "
-            "| best practices: %s | business context: %s",
+            "| business context: %s",
             modules or "(none)",
             _summary(context.architecture_rules),
             _summary(context.past_mr_rules),

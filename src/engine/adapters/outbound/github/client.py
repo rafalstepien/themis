@@ -72,17 +72,17 @@ class GitHubClient(GitProviderPort):
 
         # GitHub uses standard parameters for inline PR comments
         # Requires the line number, path, commit ID, and side of the diff.
-        payload = {
+        payload: dict[str, str | int] = {
             "body": body,
             "commit_id": diff_refs.head_sha,
             "path": comment.anchor.new_path or comment.anchor.old_path,
         }
 
         if comment.anchor.new_line is not None:
-            payload["line"] = str(comment.anchor.new_line)
+            payload["line"] = comment.anchor.new_line
             payload["side"] = "RIGHT"
         elif comment.anchor.old_line is not None:
-            payload["line"] = str(comment.anchor.old_line)
+            payload["line"] = comment.anchor.old_line
             payload["side"] = "LEFT"
 
         with handle_github_api_errors(self.pull_number):
@@ -171,6 +171,3 @@ class GitHubClient(GitProviderPort):
             for ref in comment.references
         )
         return f"{comment.content}\n\n**References:**\n{references}"
-
-    def get_file_content(self) -> str:
-        return ""

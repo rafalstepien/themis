@@ -47,6 +47,8 @@ def handle_llm_api_errors():
         raise LLMAPIError("Could not reach the LLM provider") from e
     except openai.APIError as e:
         raise LLMAPIError("LLM provider returned an unexpected error") from e
+    except Exception as e:
+        raise LLMAPIError("LLM provider raised unexpected error") from e
 
 
 @contextmanager

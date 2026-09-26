@@ -19,8 +19,8 @@ from .dto import (
 def pr_to_domain(dto: GitHubPullRequestDTO) -> MergeRequest:
     return MergeRequest.create(
         mr_id=str(dto.number),
-        target_branch=dto.base.sha,  # Assuming Domain logic handles raw SHAs for branch diffs
-        source_branch=dto.head.sha,
+        target_branch=dto.base.ref,
+        source_branch=dto.head.ref,
         title=dto.title,
         description=dto.body or "",
         files=[

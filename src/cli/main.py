@@ -1,7 +1,10 @@
 import logging
 import os
+import sys
 
 from src.engine.adapters.inbound import GitHubCLIAdapter, GitLabCLIAdapter
+
+logger = logging.getLogger(__file__)
 
 
 def _configure_logging() -> None:
@@ -21,5 +24,8 @@ def main(git_provider: str):
     _configure_logging()
     if git_provider == "gitlab":
         GitLabCLIAdapter().run()
-    if git_provider == "github":
+    elif git_provider == "github":
         GitHubCLIAdapter().run()
+    else:
+        logger.error("Git provider unrecognized. Options: [gitlab | github]")
+        sys.exit(1)

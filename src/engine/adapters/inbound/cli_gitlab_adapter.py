@@ -2,7 +2,7 @@ import logging
 import sys
 
 from src.bootstrap.config import DEFAULT_CONFIG_PATH, THEMIS_DIR, ThemisConfig
-from src.bootstrap.environment_gitlab import GitLabCIContext, GitLabCISecrets
+from src.bootstrap.environment import GitLabCIContext, GitLabCISecrets
 from src.bootstrap.exceptions import MissingEnvironmentError
 from src.engine.adapters.outbound import (
     GitLabClient,

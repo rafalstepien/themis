@@ -1,5 +1,5 @@
 from src.bootstrap.config import LLMConfig
-from src.bootstrap.environment_common import LLM_TOKEN_ENV_VAR
+from src.bootstrap.environment import LLM_TOKEN_ENV_VAR
 from src.bootstrap.exceptions import MissingEnvironmentError
 from src.engine.ports.outbound import LLMPort
 

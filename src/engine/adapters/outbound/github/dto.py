@@ -16,6 +16,7 @@ class GitHubFileDiffDTO(BaseModel):
 
 class GitHubCommitRefDTO(BaseModel):
     sha: str
+    ref: str
 
 
 class GitHubPullRequestDTO(BaseModel):

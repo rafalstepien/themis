@@ -2,7 +2,8 @@ import logging
 import sys
 
 from src.bootstrap.config import DEFAULT_CONFIG_PATH, THEMIS_DIR, ThemisConfig
-from src.bootstrap.environment_github import GitHubSettings
+from src.bootstrap.environment import GitHubSettings
+from src.bootstrap.exceptions import MissingEnvironmentError
 from src.engine.adapters.outbound import (
     GitHubClient,
     LLMClientResolver,
@@ -21,7 +22,12 @@ class GitHubCLIAdapter:
     """
 
     def run(self) -> None:
-        settings = GitHubSettings()  # type: ignore
+        try:
+            settings = GitHubSettings.load()
+        except MissingEnvironmentError as exc:
+            logger.error("CRITICAL: {%s}", exc)
+            sys.exit(1)
+
         config = ThemisConfig.from_yaml(settings.settings_dir_path / DEFAULT_CONFIG_PATH)
         github_client = GitHubClient(
             token=settings.github_api_token,

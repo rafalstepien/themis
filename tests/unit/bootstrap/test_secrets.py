@@ -1,6 +1,6 @@
 import pytest
 
-from src.bootstrap.environment_gitlab import GitLabCISecrets
+from src.bootstrap.environment import GitLabCISecrets
 from src.bootstrap.exceptions import MissingEnvironmentError
 
 

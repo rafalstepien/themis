@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from src.bootstrap.environment_gitlab import GitLabCIContext
+from src.bootstrap.environment import GitLabCIContext
 from src.bootstrap.exceptions import MissingEnvironmentError
 
 

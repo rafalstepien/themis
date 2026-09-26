@@ -1,28 +1,8 @@
 from pathlib import Path
-from typing import Self
 
-from pydantic import Field, ValidationError
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field
 
-from src.bootstrap.environment_common import LLM_TOKEN_ENV_VAR
-from src.bootstrap.exceptions import MissingEnvironmentError
-
-
-class _EnvSettings(BaseSettings):
-    model_config = SettingsConfigDict(extra="ignore")
-
-    @classmethod
-    def load(cls) -> Self:
-        try:
-            return cls()
-        except ValidationError as exc:
-            missing = [
-                str(location)
-                for error in exc.errors()
-                if error["type"] == "missing"
-                for location in error["loc"]
-            ]
-            raise MissingEnvironmentError(missing) from exc
+from src.bootstrap.environment.common import LLM_TOKEN_ENV_VAR, _EnvSettings
 
 
 class GitLabCISecrets(_EnvSettings):

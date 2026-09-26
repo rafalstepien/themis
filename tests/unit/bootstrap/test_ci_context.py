@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from src.bootstrap.environment import CIContext
+from src.bootstrap.environment import GitLabCIContext
 from src.bootstrap.exceptions import MissingEnvironmentError
 
 
@@ -12,7 +12,7 @@ def test_loads_context_and_coerces_mr_iid_to_int(
     monkeypatch.setenv("CI_PROJECT_ID", "42")
     monkeypatch.setenv("CI_MERGE_REQUEST_IID", "7")
 
-    ci_context = CIContext.load()
+    ci_context = GitLabCIContext.load()
 
     assert ci_context.project_id == "42"
     assert ci_context.mr_iid == 7
@@ -26,7 +26,7 @@ def test_project_dir_defaults_to_cwd_when_unset(
     monkeypatch.setenv("CI_PROJECT_ID", "42")
     monkeypatch.setenv("CI_MERGE_REQUEST_IID", "7")
 
-    ci_context = CIContext.load()
+    ci_context = GitLabCIContext.load()
 
     assert ci_context.project_dir == Path(".")
 
@@ -38,7 +38,7 @@ def test_project_dir_anchors_to_ci_project_dir_when_set(
     monkeypatch.setenv("CI_PROJECT_ID", "42")
     monkeypatch.setenv("CI_MERGE_REQUEST_IID", "7")
 
-    ci_context = CIContext.load()
+    ci_context = GitLabCIContext.load()
 
     assert ci_context.project_dir == Path("/builds/acme/shop")
 
@@ -47,7 +47,7 @@ def test_missing_all_context_reports_each_variable(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     with pytest.raises(MissingEnvironmentError) as exc_info:
-        CIContext.load()
+        GitLabCIContext.load()
 
     assert set(exc_info.value.variables) == {
         "CI_PROJECT_ID",
@@ -66,6 +66,6 @@ def test_non_integer_mr_iid_raises_with_empty_variables(
     monkeypatch.setenv("CI_MERGE_REQUEST_IID", "not-a-number")
 
     with pytest.raises(MissingEnvironmentError) as exc_info:
-        CIContext.load()
+        GitLabCIContext.load()
 
     assert exc_info.value.variables == []

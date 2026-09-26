@@ -1,10 +1,10 @@
-from enum import StrEnum
 import logging
 import os
+import sys
 
-import click
+from src.engine.adapters.inbound import GitHubCLIAdapter, GitLabCLIAdapter
 
-from src.review_engine.adapters.inbound.cli_adapter import ReviewEngineCLIAdapter
+logger = logging.getLogger(__file__)
 
 
 def _configure_logging() -> None:
@@ -20,22 +20,12 @@ def _configure_logging() -> None:
     )
 
 
-class RunMode(StrEnum):
-    ENGINE = "engine"
-    INDEXER = "indexer"
-
-
-@click.command()
-@click.option(
-    "--mode", default="engine", help="The mode in which the script is run (engine | indexer)"
-)
-def main(mode: str):
+def main(git_provider: str):
     _configure_logging()
-    if mode == RunMode.ENGINE:
-        ReviewEngineCLIAdapter().run()
-    elif mode == RunMode.INDEXER:
-        raise NotImplementedError
-
-
-if __name__ == "__main__":
-    main()
+    if git_provider == "gitlab":
+        GitLabCLIAdapter().run()
+    elif git_provider == "github":
+        GitHubCLIAdapter().run()
+    else:
+        logger.error("Git provider unrecognized. Options: [gitlab | github]")
+        sys.exit(1)

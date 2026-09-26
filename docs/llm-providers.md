@@ -18,6 +18,20 @@ alike. It cares only about the contract, not about who runs the model behind it.
 > compatible server exposes. There are no vendor shortcuts and no built-in default URLs: you always
 > set `base_url` explicitly, and you tell Themis who runs the server with `deployment_type`.
 
+## How the review's structure is enforced
+
+Themis does **not** use the provider's native structured output (`response_format` with a JSON
+schema), because providers honour it inconsistently — Anthropic's OpenAI-compatible endpoint, for
+example, does not enforce the schema. Instead, the same mechanism is used for every backend:
+
+1. **Prompt** — the system prompt embeds the JSON Schema generated from `CodeReviewResponseDTO`
+   and asks for a bare JSON object; the user prompt ends with a reminder.
+2. **Parsing** — `output_parser.py` extracts the object from the plain-text answer, tolerating
+   code fences, surrounding prose and `<think>` blocks, then validates it with pydantic.
+3. **Repair** — if parsing fails, the model is shown its answer plus the concrete error and asked
+   once to correct it. A response truncated by the output token limit fails immediately with an
+   actionable message instead.
+
 ## You configure exactly two things
 
 A backend is fully described by two keys:

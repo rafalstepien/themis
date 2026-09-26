@@ -13,6 +13,8 @@ import json
 from src.engine.domain.diff_hunks import DiffLineKind, parse_diff
 from src.engine.domain.models import AnalysisContext, MergeRequest
 
+from .dto import CodeReviewResponseDTO
+
 _LINE_MARKERS = {
     DiffLineKind.ADDED: "+",
     DiffLineKind.REMOVED: "-",
@@ -177,22 +179,22 @@ Good output:
       "name": "Contract change",
       "description": "The DTO is the origin of this change. Review this first to understand what new data is flowing through the system.",
       "changes": [
-        { "id": 1, "overview": "Adds `discount_amount: Decimal` to OrderItemDTO. This is the root cause of all downstream changes in this MR." }
+        { "path": "src/dtos/order_item_dto.py", "overview": "Adds `discount_amount: Decimal` to OrderItemDTO. This is the root cause of all downstream changes in this MR." }
       ]
     },
     {
       "name": "Business logic",
       "description": "Core discount calculation added to the pricing layer. Depends on the contract change above.",
       "changes": [
-        { "id": 2, "overview": "Implements discount deduction in `calculate_total()`. Check rounding mode and whether negative discounts are guarded." },
-        { "id": 4, "overview": "Unit tests covering happy path and zero-discount edge case. Missing test for discount > item price." }
+        { "path": "src/services/pricing_service.py", "overview": "Implements discount deduction in `calculate_total()`. Check rounding mode and whether negative discounts are guarded." },
+        { "path": "tests/test_pricing_service.py", "overview": "Unit tests covering happy path and zero-discount edge case. Missing test for discount > item price." }
       ]
     },
     {
       "name": "API surface",
       "description": "Exposes the new field to API consumers. Review last — only makes sense after understanding the contract and logic.",
       "changes": [
-        { "id": 3, "overview": "Response schema now includes `discount_amount`. Verify the field is not accidentally exposed in contexts where discounts aren't applicable." }
+        { "path": "src/api/orders_router.py", "overview": "Response schema now includes `discount_amount`. Verify the field is not accidentally exposed in contexts where discounts aren't applicable." }
       ]
     }
   ]
@@ -250,9 +252,43 @@ this review, so you MUST return an empty list here.
 # endregion
 
 
+# region
+# Structured output is requested through the prompt rather than the provider's
+# `response_format`, because not every OpenAI-compatible provider enforces a JSON
+# schema (Anthropic's compatibility layer does not). The schema is generated from
+# the DTO so the prompt can never drift from what the parser validates.
+_OUTPUT_FORMAT_SECTION = f"""\
+---
+
+## Output format
+Respond with a single JSON object and nothing else:
+  - No prose, explanations or Markdown before or after the object.
+  - Do not wrap the object in a code fence.
+  - The object MUST contain all three top-level keys: `cohorts`, \
+`business_requirements_matrix` and `code_review_comments`. Use an empty list \
+(`[]`) for a section that has nothing to report — never omit the key.
+  - Use `null` (not an empty string) for `file_path`, `line` or `rule` when they \
+do not apply.
+
+The object must validate against this JSON Schema:
+```json
+{json.dumps(CodeReviewResponseDTO.model_json_schema())}
+```
+
+Minimal valid response (a review with nothing to report):
+{{"cohorts": [], "business_requirements_matrix": [], "code_review_comments": []}}
+"""
+# endregion
+
+_OUTPUT_FORMAT_REMINDER = (
+    "Respond now with the JSON object described in the Output format section — "
+    "JSON only, no surrounding text."
+)
+
+
 def build_system_prompt(has_business_context: bool) -> str:
     matrix = _MATRIX_INSTRUCTION_ENABLED if has_business_context else _MATRIX_INSTRUCTION_DISABLED
-    return f"{_SYSTEM_PROMPT_BASE}\n{matrix}"
+    return f"{_SYSTEM_PROMPT_BASE}\n{matrix}\n{_OUTPUT_FORMAT_SECTION}"
 
 
 def build_user_prompt(mr: MergeRequest, context: AnalysisContext) -> str:
@@ -280,6 +316,10 @@ def build_user_prompt(mr: MergeRequest, context: AnalysisContext) -> str:
         ]
     if context.business_context:
         sections += ["", "# Business / ticket context", context.business_context]
+
+    # The diff can be long; repeating the format demand at the very end keeps it
+    # the last thing the model reads before answering.
+    sections += ["", _OUTPUT_FORMAT_REMINDER]
 
     return "\n".join(sections)
 

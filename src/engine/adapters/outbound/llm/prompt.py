@@ -210,53 +210,6 @@ Good output:
 # endregion
 
 # region
-_SYSTEM_PROMPT_BASE = f"""\
-You are a Senior Staff Software Engineer performing a code review of a merge request.
-
-## Goal
-Give high-signal, actionable feedback. Stay silent on trivia.
-Focus exclusively on:
-- Logic bugs
-- Security vulnerabilities
-- Architectural violations
-- Broken domain/business rules
-- What the implementation is missing
-
-Do NOT comment on formatting, naming style, or anything a linter already catches.
-
----
-
-{_COHORTS_SECTION}
-
----
-
-{_CODE_REVIEW_COMMENTS_SECTION}
-
-"""
-# endregion
-
-
-# region
-_MATRIX_INSTRUCTION_ENABLED = """\
-3. business_requirements_matrix — for each business requirement found in the \
-provided business/ticket context, state the requirement, whether the change \
-meets it (status), and the evidence from the diff supporting that verdict.
-"""
-# endregion
-
-# region
-_MATRIX_INSTRUCTION_DISABLED = """\
-3. business_requirements_matrix — no business/ticket context was provided for \
-this review, so you MUST return an empty list here.
-"""
-# endregion
-
-
-# region
-# Structured output is requested through the prompt rather than the provider's
-# `response_format`, because not every OpenAI-compatible provider enforces a JSON
-# schema (Anthropic's compatibility layer does not). The schema is generated from
-# the DTO so the prompt can never drift from what the parser validates.
 _OUTPUT_FORMAT_SECTION = f"""\
 ---
 
@@ -280,15 +233,53 @@ Minimal valid response (a review with nothing to report):
 """
 # endregion
 
-_OUTPUT_FORMAT_REMINDER = (
-    "Respond now with the JSON object described in the Output format section — "
-    "JSON only, no surrounding text."
-)
+# region
+_SYSTEM_PROMPT_BASE = f"""\
+You are a Senior Staff Software Engineer performing a code review of a merge request.
+
+## Goal
+Give high-signal, actionable feedback. Stay silent on trivia.
+Focus exclusively on:
+- Logic bugs
+- Security vulnerabilities
+- Architectural violations
+- Broken domain/business rules
+- What the implementation is missing
+
+Do NOT comment on formatting, naming style, or anything a linter already catches.
+
+---
+
+{_COHORTS_SECTION}
+
+---
+
+{_CODE_REVIEW_COMMENTS_SECTION}
+
+{_OUTPUT_FORMAT_SECTION}
+"""
+# endregion
+
+
+# region
+_MATRIX_INSTRUCTION_ENABLED = """\
+3. business_requirements_matrix — for each business requirement found in the \
+provided business/ticket context, state the requirement, whether the change \
+meets it (status), and the evidence from the diff supporting that verdict.
+"""
+# endregion
+
+# region
+_MATRIX_INSTRUCTION_DISABLED = """\
+3. business_requirements_matrix — no business/ticket context was provided for \
+this review, so you MUST return an empty list here.
+"""
+# endregion
 
 
 def build_system_prompt(has_business_context: bool) -> str:
     matrix = _MATRIX_INSTRUCTION_ENABLED if has_business_context else _MATRIX_INSTRUCTION_DISABLED
-    return f"{_SYSTEM_PROMPT_BASE}\n{matrix}\n{_OUTPUT_FORMAT_SECTION}"
+    return f"{_SYSTEM_PROMPT_BASE}\n{matrix}"
 
 
 def build_user_prompt(mr: MergeRequest, context: AnalysisContext) -> str:
@@ -316,10 +307,6 @@ def build_user_prompt(mr: MergeRequest, context: AnalysisContext) -> str:
         ]
     if context.business_context:
         sections += ["", "# Business / ticket context", context.business_context]
-
-    # The diff can be long; repeating the format demand at the very end keeps it
-    # the last thing the model reads before answering.
-    sections += ["", _OUTPUT_FORMAT_REMINDER]
 
     return "\n".join(sections)
 

@@ -25,7 +25,7 @@ schema), because providers honour it inconsistently — Anthropic's OpenAI-compa
 example, does not enforce the schema. Instead, the same mechanism is used for every backend:
 
 1. **Prompt** — the system prompt embeds the JSON Schema generated from `CodeReviewResponseDTO`
-   and asks for a bare JSON object; the user prompt ends with a reminder.
+   and asks for a bare JSON object.
 2. **Parsing** — `output_parser.py` extracts the object from the plain-text answer, tolerating
    code fences, surrounding prose and `<think>` blocks, then validates it with pydantic.
 3. **Repair** — if parsing fails, the model is shown its answer plus the concrete error and asked

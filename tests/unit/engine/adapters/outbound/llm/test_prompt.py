@@ -58,9 +58,3 @@ def test_system_prompt_cohort_example_uses_schema_field_names():
 
     assert '"id":' not in prompt
     assert '"path": "src/dtos/order_item_dto.py"' in prompt
-
-
-def test_user_prompt_ends_with_output_format_reminder():
-    prompt = build_user_prompt(MergeRequestFactory.build(), AnalysisContext())
-
-    assert prompt.rstrip().endswith("JSON only, no surrounding text.")

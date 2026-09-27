@@ -124,6 +124,16 @@ def test_repair_can_be_disabled() -> None:
     assert create.call_count == 1
 
 
+def test_negative_repair_attempts_makes_no_request_and_raises() -> None:
+    # Given a misconfigured attempt count, the request loop runs zero times
+    client, create = _client_returning(max_repair_attempts=-1)
+
+    # When / Then
+    with pytest.raises(LLMResponseError, match="no parsable structured output"):
+        client.generate_code_review(_merge_request(), AnalysisContext())
+    assert create.call_count == 0
+
+
 def test_refusal_raises_response_error_without_repair() -> None:
     client, create = _client_returning(_stub_response(None, refusal="I cannot help."))
 

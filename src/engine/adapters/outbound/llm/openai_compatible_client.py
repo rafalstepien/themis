@@ -79,7 +79,9 @@ class OpenAICompatibleClient(_StructuredOutputLLMClient):
                     {"role": "user", "content": _REPAIR_PROMPT.format(error=e)},
                 ]
 
-        return None  # unreachable: the loop either returns or raises
+        # Only reached when the loop runs zero times (a negative max_repair_attempts),
+        # i.e. no request was made; the caller turns None into an LLMResponseError.
+        return None
 
     def _complete(self, messages: list[ChatCompletionMessageParam]) -> str | None:
         with handle_llm_api_errors():

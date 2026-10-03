@@ -14,6 +14,8 @@ def _cloud_config(**overrides: object) -> LLMConfig:
         "deployment_type": LLMDeploymentType.CLOUD,
         "model": "gpt-4o",
         "base_url": "https://api.openai.com/v1",
+        "max_tokens": 32_000,
+        "reasoning_effort": "minimal",
         **overrides,
     }
     return LLMConfig(**fields)
@@ -24,6 +26,8 @@ def _self_hosted_config(**overrides: object) -> LLMConfig:
         "deployment_type": LLMDeploymentType.SELF_HOSTED,
         "model": "qwen2.5-coder",
         "base_url": "http://localhost:8000/v1",
+        "max_tokens": 32_000,
+        "reasoning_effort": "minimal",
         **overrides,
     }
     return LLMConfig(**fields)

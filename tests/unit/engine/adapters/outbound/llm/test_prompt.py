@@ -42,10 +42,10 @@ def test_build_user_prompt_renders_change_header_and_gutter():
 
 @pytest.mark.parametrize("has_business_context", [True, False])
 def test_system_prompt_embeds_the_response_schema(has_business_context: bool):
-    # Given / When
+    # Given: System prompt
     prompt = build_system_prompt(has_business_context)
 
-    # Then the schema the parser validates against is spelled out for the model
+    # Then: The schema is always embedded in the prompt
     schema = json.dumps(CodeReviewResponseDTO.model_json_schema())
     assert "## Output format" in prompt
     assert schema in prompt

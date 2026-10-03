@@ -40,7 +40,7 @@ def parse_code_review(content: str | None) -> CodeReviewResponseDTO:
     object does not match ``CodeReviewResponseDTO``. The error message is
     descriptive enough to be fed back to the model for a repair attempt.
     """
-    payload = extract_json_object(content)
+    payload = _extract_json_object(content)
     try:
         return CodeReviewResponseDTO.model_validate(payload)
     except pydantic.ValidationError as e:
@@ -49,7 +49,7 @@ def parse_code_review(content: str | None) -> CodeReviewResponseDTO:
         ) from e
 
 
-def extract_json_object(content: str | None) -> dict:
+def _extract_json_object(content: str | None) -> dict:
     """Return the first JSON object found in ``content``.
 
     Candidates are tried from most to least specific: the whole answer, the

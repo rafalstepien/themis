@@ -29,6 +29,15 @@ class LLMResponseError(LLMError):
         super().__init__(message)
 
 
+class LLMConfigurationError(LLMError):
+    """
+    Raised when the configuration for LLM is incorrect.
+    """
+
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 @contextmanager
 def handle_llm_api_errors():
     try:

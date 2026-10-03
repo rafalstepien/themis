@@ -32,7 +32,7 @@ Raise comments for things that are absent in the implementation, but should be t
 
 ### Rules
   - When there are no additional comments to be made in the Merge Request, and the proposed changes are good enough, respond with empty code_review_comments list (`[]`)
-  - Use correct markdown formatting for comment content.
+  - Use correct markdown formatting for comment content. Wrap all code-related concepts (paths, classes, functions, variables, keywords) in backticks (\``). Use bold text for structural emphasis (e.g., **Problem:**), but strictly avoid using Markdown headers (# or ##) to ensure the comment remains compact and readable in a standard PR interface.
   - Each comment must, in its `content`:
     - Name the specific file and describe the problem concisely
     - Explain the risk or consequence and suggest a concrete fix
@@ -58,7 +58,6 @@ Raise comments for things that are absent in the implementation, but should be t
     gateway" are usually one architectural violation, not three).
 
   - Only raise a comment when it adds real value. When in doubt, stay silent.
-  - Each comment should be formatted in Markdown. Wrap all code-related concepts (paths, classes, functions, variables, keywords) in backticks (\``). Use bold text for structural emphasis (e.g., **Problem:**), but strictly avoid using Markdown headers (# or ##) to ensure the comment remains compact and readable in a standard PR interface.
 
 
 ### Comment format template
@@ -255,6 +254,8 @@ Do NOT comment on formatting, naming style, or anything a linter already catches
 ---
 
 {_CODE_REVIEW_COMMENTS_SECTION}
+
+---
 
 {_OUTPUT_FORMAT_SECTION}
 """

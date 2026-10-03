@@ -22,6 +22,8 @@ llm:
   deployment_type: cloud
   model: claude-opus-4-8
   base_url: https://api.anthropic.com/v1/
+  reasoning_effort: minimal
+  max_tokens: 32000
 """
 
 _CONFIG_WITHOUT_REVIEW = """
@@ -31,6 +33,8 @@ llm:
   deployment_type: cloud
   model: gpt-4o
   base_url: https://api.openai.com/v1
+  reasoning_effort: minimal
+  max_tokens: 32000
 """
 
 _SELF_HOSTED_CONFIG = """
@@ -40,6 +44,8 @@ llm:
   deployment_type: self_hosted
   model: qwen2.5-coder
   base_url: http://localhost:8000/v1
+  reasoning_effort: minimal
+  max_tokens: 32000
 """
 
 
@@ -68,6 +74,8 @@ def test_loads_full_config(tmp_path: Path) -> None:
             deployment_type=LLMDeploymentType.CLOUD,
             base_url="https://api.anthropic.com/v1/",
             model="claude-opus-4-8",
+            reasoning_effort="minimal",
+            max_tokens=32_000,
         ),
     )
 

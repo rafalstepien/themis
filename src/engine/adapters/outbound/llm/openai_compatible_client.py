@@ -3,8 +3,10 @@ import logging
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam
 
+from src.bootstrap.config import REASONING_EFFORTS
+
 from .dto import CodeReviewResponseDTO
-from .exceptions import LLMResponseError, handle_llm_api_errors
+from .exceptions import LLMConfigurationError, LLMResponseError, handle_llm_api_errors
 from .output_parser import parse_code_review
 from .structured_output_llm_client import _StructuredOutputLLMClient
 
@@ -44,11 +46,19 @@ class OpenAICompatibleClient(_StructuredOutputLLMClient):
         self,
         model: str,
         base_url: str | None,
+        reasoning_effort: REASONING_EFFORTS,
+        max_tokens: int,
         token: str | None = None,
         max_repair_attempts: int = _DEFAULT_MAX_REPAIR_ATTEMPTS,
     ):
         super().__init__(model)
         self._client = OpenAI(base_url=base_url, api_key=token or _PLACEHOLDER_API_KEY)
+        self._max_repair_attempts: int
+        self._set_validate_repair_attempts(max_repair_attempts)
+
+    def _set_validate_repair_attempts(self, max_repair_attempts: int):
+        if max_repair_attempts < 0:
+            raise LLMConfigurationError("Repair attempts can't be negative")
         self._max_repair_attempts = max_repair_attempts
 
     def _request_with_structured_output(
@@ -79,14 +89,16 @@ class OpenAICompatibleClient(_StructuredOutputLLMClient):
                     {"role": "user", "content": _REPAIR_PROMPT.format(error=e)},
                 ]
 
-        # Only reached when the loop runs zero times (a negative max_repair_attempts),
-        # i.e. no request was made; the caller turns None into an LLMResponseError.
         return None
 
     def _complete(self, messages: list[ChatCompletionMessageParam]) -> str | None:
         with handle_llm_api_errors():
-            response = self._client.chat.completions.create(model=self.model, messages=messages)
-
+            response = self._client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                reasoning_effort="high",
+                max_completion_tokens=32_000,
+            )
         choice = response.choices[0]
         message = choice.message
         logger.debug("Raw LLM response content:\n%s", message.content)
@@ -96,12 +108,9 @@ class OpenAICompatibleClient(_StructuredOutputLLMClient):
             raise LLMResponseError(f"LLM refused to respond: {refusal}")
 
         if choice.finish_reason == "length":
-            # A truncated answer cannot be repaired by asking again with the same
-            # budget, so fail loudly with an actionable message instead.
             raise LLMResponseError(
-                "LLM response was cut off by the provider's output token limit before "
-                "the JSON was complete. Reduce the review size (review.max_changed_files / "
-                "review.max_changed_lines_per_file) or use a model with a larger output limit."
+                "LLM response was cut off by the token limit. "
+                "Increase the token limit or reduce the review size."
             )
 
         return message.content

@@ -1,7 +1,6 @@
 from contextlib import contextmanager
 
 import openai
-import pydantic
 
 from src.engine.ports.outbound.llm_port import LLMPortError
 
@@ -30,6 +29,15 @@ class LLMResponseError(LLMError):
         super().__init__(message)
 
 
+class LLMConfigurationError(LLMError):
+    """
+    Raised when the configuration for LLM is incorrect.
+    """
+
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 @contextmanager
 def handle_llm_api_errors():
     try:
@@ -49,13 +57,3 @@ def handle_llm_api_errors():
         raise LLMAPIError("LLM provider returned an unexpected error") from e
     except Exception as e:
         raise LLMAPIError("LLM provider raised unexpected error") from e
-
-
-@contextmanager
-def handle_llm_data_errors():
-    try:
-        yield
-    except pydantic.ValidationError as e:
-        raise LLMResponseError(
-            "LLM responded with unexpected format. Could not create a DTO."
-        ) from e

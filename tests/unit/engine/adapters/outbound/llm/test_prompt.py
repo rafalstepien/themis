@@ -1,4 +1,13 @@
-from src.engine.adapters.outbound.llm.prompt import _annotate_diff, build_user_prompt
+import json
+
+import pytest
+
+from src.engine.adapters.outbound.llm.dto import CodeReviewResponseDTO
+from src.engine.adapters.outbound.llm.prompt import (
+    _annotate_diff,
+    build_system_prompt,
+    build_user_prompt,
+)
 from src.engine.domain.models import AnalysisContext
 from tests.unit.engine.domain.factories import ChangedFileFactory, MergeRequestFactory
 
@@ -29,3 +38,23 @@ def test_build_user_prompt_renders_change_header_and_gutter():
 
     assert "## src/catalog/pricing.py" in prompt
     assert "    1 +price = 1.5" in prompt
+
+
+@pytest.mark.parametrize("has_business_context", [True, False])
+def test_system_prompt_embeds_the_response_schema(has_business_context: bool):
+    # Given: System prompt
+    prompt = build_system_prompt(has_business_context)
+
+    # Then: The schema is always embedded in the prompt
+    schema = json.dumps(CodeReviewResponseDTO.model_json_schema())
+    assert "## Output format" in prompt
+    assert schema in prompt
+
+
+def test_system_prompt_cohort_example_uses_schema_field_names():
+    # The cohort example must match `CohortChangeDTO`, otherwise models copy the
+    # wrong key and fail validation.
+    prompt = build_system_prompt(has_business_context=False)
+
+    assert '"id":' not in prompt
+    assert '"path": "src/dtos/order_item_dto.py"' in prompt

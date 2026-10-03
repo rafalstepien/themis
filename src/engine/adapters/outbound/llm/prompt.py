@@ -13,6 +13,8 @@ import json
 from src.engine.domain.diff_hunks import DiffLineKind, parse_diff
 from src.engine.domain.models import AnalysisContext, MergeRequest
 
+from .dto import CodeReviewResponseDTO
+
 _LINE_MARKERS = {
     DiffLineKind.ADDED: "+",
     DiffLineKind.REMOVED: "-",
@@ -30,7 +32,7 @@ Raise comments for things that are absent in the implementation, but should be t
 
 ### Rules
   - When there are no additional comments to be made in the Merge Request, and the proposed changes are good enough, respond with empty code_review_comments list (`[]`)
-  - Use correct markdown formatting for comment content.
+  - Use correct markdown formatting for comment content. Wrap all code-related concepts (paths, classes, functions, variables, keywords) in backticks (\``). Use bold text for structural emphasis (e.g., **Problem:**), but strictly avoid using Markdown headers (# or ##) to ensure the comment remains compact and readable in a standard PR interface.
   - Each comment must, in its `content`:
     - Name the specific file and describe the problem concisely
     - Explain the risk or consequence and suggest a concrete fix
@@ -56,7 +58,6 @@ Raise comments for things that are absent in the implementation, but should be t
     gateway" are usually one architectural violation, not three).
 
   - Only raise a comment when it adds real value. When in doubt, stay silent.
-  - Each comment should be formatted in Markdown. Wrap all code-related concepts (paths, classes, functions, variables, keywords) in backticks (\``). Use bold text for structural emphasis (e.g., **Problem:**), but strictly avoid using Markdown headers (# or ##) to ensure the comment remains compact and readable in a standard PR interface.
 
 
 ### Comment format template
@@ -177,22 +178,22 @@ Good output:
       "name": "Contract change",
       "description": "The DTO is the origin of this change. Review this first to understand what new data is flowing through the system.",
       "changes": [
-        { "id": 1, "overview": "Adds `discount_amount: Decimal` to OrderItemDTO. This is the root cause of all downstream changes in this MR." }
+        { "path": "src/dtos/order_item_dto.py", "overview": "Adds `discount_amount: Decimal` to OrderItemDTO. This is the root cause of all downstream changes in this MR." }
       ]
     },
     {
       "name": "Business logic",
       "description": "Core discount calculation added to the pricing layer. Depends on the contract change above.",
       "changes": [
-        { "id": 2, "overview": "Implements discount deduction in `calculate_total()`. Check rounding mode and whether negative discounts are guarded." },
-        { "id": 4, "overview": "Unit tests covering happy path and zero-discount edge case. Missing test for discount > item price." }
+        { "path": "src/services/pricing_service.py", "overview": "Implements discount deduction in `calculate_total()`. Check rounding mode and whether negative discounts are guarded." },
+        { "path": "tests/test_pricing_service.py", "overview": "Unit tests covering happy path and zero-discount edge case. Missing test for discount > item price." }
       ]
     },
     {
       "name": "API surface",
       "description": "Exposes the new field to API consumers. Review last — only makes sense after understanding the contract and logic.",
       "changes": [
-        { "id": 3, "overview": "Response schema now includes `discount_amount`. Verify the field is not accidentally exposed in contexts where discounts aren't applicable." }
+        { "path": "src/api/orders_router.py", "overview": "Response schema now includes `discount_amount`. Verify the field is not accidentally exposed in contexts where discounts aren't applicable." }
       ]
     }
   ]
@@ -205,6 +206,30 @@ Good output:
 
 """
 
+# endregion
+
+# region
+_OUTPUT_FORMAT_SECTION = f"""\
+---
+
+## Output format
+Respond with a single JSON object and nothing else:
+  - No prose, explanations or Markdown before or after the object.
+  - Do not wrap the object in a code fence.
+  - The object MUST contain all three top-level keys: `cohorts`, \
+`business_requirements_matrix` and `code_review_comments`. Use an empty list \
+(`[]`) for a section that has nothing to report — never omit the key.
+  - Use `null` (not an empty string) for `file_path`, `line` or `rule` when they \
+do not apply.
+
+The object must validate against this JSON Schema:
+```json
+{json.dumps(CodeReviewResponseDTO.model_json_schema())}
+```
+
+Minimal valid response (a review with nothing to report):
+{{"cohorts": [], "business_requirements_matrix": [], "code_review_comments": []}}
+"""
 # endregion
 
 # region
@@ -230,6 +255,9 @@ Do NOT comment on formatting, naming style, or anything a linter already catches
 
 {_CODE_REVIEW_COMMENTS_SECTION}
 
+---
+
+{_OUTPUT_FORMAT_SECTION}
 """
 # endregion
 

@@ -1,6 +1,7 @@
 from enum import StrEnum
 import logging
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 import yaml
@@ -9,11 +10,15 @@ logger = logging.getLogger(__name__)
 
 THEMIS_DIR = ".themis-ai"
 DEFAULT_CONFIG_PATH = f"{THEMIS_DIR}/config.yaml"
+DEFAULT_MAX_TOKENS = 32_000
 
 RULES_SUBDIR = "rules"
 RULES_FILENAME = "rule.json"
 ARCHITECTURE_SUBDIR = "architecture"
 ARCHITECTURE_FILENAME = "architecture.json"
+
+
+REASONING_EFFORTS = Literal["minimal", "low", "medium", "high", "xhigh", "max"]
 
 
 def rule_file_path(module: str) -> str:
@@ -43,6 +48,8 @@ class LLMConfig(BaseModel):
     deployment_type: LLMDeploymentType = LLMDeploymentType.CLOUD
     model: str
     base_url: str | None = None
+    max_tokens: int = DEFAULT_MAX_TOKENS
+    reasoning_effort: REASONING_EFFORTS
 
     @property
     def requires_token(self) -> bool:

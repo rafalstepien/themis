@@ -19,5 +19,9 @@ class LLMClientResolver:
             raise MissingEnvironmentError([LLM_TOKEN_ENV_VAR])
 
         return OpenAICompatibleClient(
-            model=llm_config.model, base_url=llm_config.base_url, token=token
+            model=llm_config.model,
+            base_url=llm_config.base_url,
+            token=token,
+            reasoning_effort=llm_config.reasoning_effort,
+            max_tokens=llm_config.max_tokens,
         )

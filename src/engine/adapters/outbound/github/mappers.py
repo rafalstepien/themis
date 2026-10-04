@@ -5,7 +5,6 @@ from src.engine.domain.models import (
     MergeRequest,
     MRComment,
     MRCommentAuthor,
-    MRComments,
     TokenOwner,
 )
 
@@ -16,7 +15,10 @@ from .dto import (
 )
 
 
-def pr_to_domain(dto: GitHubPullRequestDTO) -> MergeRequest:
+def pr_to_domain(
+    dto: GitHubPullRequestDTO,
+    comments: list[GitHubCommentDTO],
+) -> MergeRequest:
     return MergeRequest.create(
         mr_id=str(dto.number),
         target_branch=dto.base.ref,
@@ -39,6 +41,18 @@ def pr_to_domain(dto: GitHubPullRequestDTO) -> MergeRequest:
             start_sha=dto.base.sha,  # Start SHA maps closely to the base ref
             head_sha=dto.head.sha,
         ),
+        comments=[
+            MRComment(
+                id=c.id,
+                system=c.user.type == "Bot",
+                author=MRCommentAuthor(
+                    id=c.user.id,
+                    username=c.user.login,
+                    name=c.user.name or c.user.login,
+                ),
+            )
+            for c in comments
+        ],
     )
 
 
@@ -50,26 +64,6 @@ def _infer_change_type(status: str) -> ChangeType:
     if status == "renamed":
         return ChangeType.RENAMED
     return ChangeType.MODIFIED
-
-
-def pr_comments_to_domain(
-    general_comments: list[GitHubCommentDTO], review_comments: list[GitHubCommentDTO]
-) -> MRComments:
-    all_comments = general_comments + review_comments
-    return MRComments(
-        comments=[
-            MRComment(
-                id=c.id,
-                system=c.user.type == "Bot",
-                author=MRCommentAuthor(
-                    id=c.user.id,
-                    username=c.user.login,
-                    name=c.user.name or c.user.login,
-                ),
-            )
-            for c in all_comments
-        ]
-    )
 
 
 def token_owner_to_domain(dto: GitHubUserDTO) -> TokenOwner:

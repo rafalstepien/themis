@@ -13,7 +13,7 @@ from .factories import FileDiffDTOFactory, MergeRequestDTOFactory
 def test_map_to_domain_object():
     dto = MergeRequestDTOFactory.build()
 
-    domain_mr = mr_to_domain(dto)
+    domain_mr = mr_to_domain(dto, [])
 
     assert domain_mr
     assert domain_mr.files[0].change_type == ChangeType.MODIFIED
@@ -24,7 +24,7 @@ def test_map_to_domain_object__maps_diff_refs():
     diff_refs = DiffRefsDTO(base_sha="base", start_sha="start", head_sha="head")
     dto = MergeRequestDTOFactory.build(diff_refs=diff_refs)
 
-    domain_mr = mr_to_domain(dto)
+    domain_mr = mr_to_domain(dto, [])
 
     assert domain_mr.diff_refs == DiffRefs(base_sha="base", start_sha="start", head_sha="head")
 
@@ -74,6 +74,6 @@ def test_map_to_domain_object__maps_change_type(
 ):
     dto = MergeRequestDTOFactory.build(changes=[file_diff_dto])
 
-    domain_mr = mr_to_domain(dto)
+    domain_mr = mr_to_domain(dto, [])
 
     assert domain_mr.files[0].change_type == expected_change_type

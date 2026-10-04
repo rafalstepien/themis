@@ -8,19 +8,19 @@ from src.engine.domain.models import (
     CommentAnchor,
     DiffRefs,
     MergeRequest,
-    MRComments,
     ReviewComment,
 )
 from src.engine.ports.outbound import GitProviderPort
 
 from .dto import (
     GitLabFileResponseDTO,
+    GitLabNoteDTO,
     GitLabNotesResponseDTO,
     MergeRequestDTO,
     TokenOwnerIdentityDTO,
 )
 from .exceptions import handle_gitlab_api_errors, handle_gitlab_data_errors
-from .mappers import mr_comments_to_domain, mr_to_domain, token_owner_to_domain
+from .mappers import mr_to_domain, token_owner_to_domain
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,9 @@ class GitLabClient(GitProviderPort):
             response = self._client.get(url)
             response.raise_for_status()
 
-        return mr_to_domain(MergeRequestDTO.model_validate(response.json()))
+        comments = self._get_mr_comments()
+
+        return mr_to_domain(MergeRequestDTO.model_validate(response.json()), comments)
 
     def get_token_owner_details(self):
         url = f"{self.BASE_API_URL}/user"
@@ -88,14 +90,14 @@ class GitLabClient(GitProviderPort):
 
         return token_owner_to_domain(TokenOwnerIdentityDTO(**response.json()))
 
-    def get_mr_comments(self) -> MRComments:
+    def _get_mr_comments(self) -> list[GitLabNoteDTO]:
         url = f"{self.BASE_API_URL}/projects/{self.project_id}/merge_requests/{self.mr_iid}/notes?per_page=100"
 
         with handle_gitlab_api_errors(self.mr_iid):
             response = self._client.get(url)
             response.raise_for_status()
 
-        return mr_comments_to_domain(GitLabNotesResponseDTO(notes=response.json()))
+        return GitLabNotesResponseDTO(notes=response.json()).notes
 
     def _get_branch_file_content(self, file_path: str, branch: str) -> str:
         """Fetch raw file content from a specific branch, decoding base64. Returns empty string for missing files."""

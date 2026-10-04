@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from src.engine.domain.models import (
     DiffRefs,
     MergeRequest,
-    MRComments,
     ReviewComment,
     TokenOwner,
 )
@@ -34,9 +33,6 @@ class GitProviderPort(ABC):
         ``comment.anchor`` must be set.
         """
         ...
-
-    @abstractmethod
-    def get_mr_comments(self) -> MRComments: ...
 
     @abstractmethod
     def get_token_owner_details(self) -> TokenOwner: ...

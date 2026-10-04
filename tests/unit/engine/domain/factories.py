@@ -89,6 +89,7 @@ class MergeRequestFactory(factory.Factory[MergeRequest]):
     title = "title"
     description = "description"
     files = factory.LazyFunction(lambda: [ChangedFileFactory()])
+    comments = factory.LazyFunction(lambda: [])
 
 
 class CohortChangeFactory(factory.Factory[Change]):

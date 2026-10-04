@@ -46,9 +46,7 @@ class ReviewOrchestrator:
         architecture = self.module_context_port.load_architecture(modules)
 
         token_owner_details = self.git_provider_port.get_token_owner_details()
-        mr_comments = self.git_provider_port.get_mr_comments()
-
-        if mr_comments.code_review_already_performed(token_owner_details):
+        if mr.code_review_already_performed(token_owner_details):
             logger.info("Code review was already executed. Exiting ...")
             return
 

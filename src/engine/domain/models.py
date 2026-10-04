@@ -72,6 +72,20 @@ class ChangedFile:
         return True
 
 
+@dataclass(frozen=True, slots=True)
+class MRCommentAuthor:
+    id: int
+    username: str
+    name: str
+
+
+@dataclass(frozen=True, slots=True)
+class MRComment:
+    id: int
+    system: bool
+    author: MRCommentAuthor
+
+
 @dataclass
 class MergeRequest:  # Aggregate Root
     mr_id: str
@@ -80,6 +94,7 @@ class MergeRequest:  # Aggregate Root
     title: str
     description: str
     files: list[ChangedFile]
+    comments: list[MRComment]
     diff_refs: DiffRefs | None = None
 
     @classmethod
@@ -91,6 +106,7 @@ class MergeRequest:  # Aggregate Root
         title: str,
         description: str,
         files: list[ChangedFile],
+        comments: list[MRComment],
         diff_refs: DiffRefs | None = None,
     ) -> "MergeRequest":
         if not mr_id:
@@ -107,6 +123,7 @@ class MergeRequest:  # Aggregate Root
             description=description,
             files=files,
             diff_refs=diff_refs,
+            comments=comments,
         )
 
     def should_be_reviewed(self, max_changed_files: int) -> bool:
@@ -150,6 +167,18 @@ class MergeRequest:  # Aggregate Root
                 logger.warning("Skipping not reviewable file %s", f.display_path)
 
         self.files = new_files
+
+    def code_review_already_performed(self, token_owner: TokenOwner) -> bool:
+        for comment in self.comments:
+            if not comment.system:
+                if self._review_account_is_comment_author(comment.author.id, token_owner.id):
+                    return True
+        return False
+
+    def _review_account_is_comment_author(
+        self, comment_author_id: int, token_owner_id: int
+    ) -> bool:
+        return comment_author_id == token_owner_id
 
 
 def _longest_module_match(path: str, modules: list[str]) -> str | None:
@@ -258,37 +287,6 @@ class CodeReview:
             current_comment_content += text
 
         return ReviewComment(content=current_comment_content, references=[], anchor=None)
-
-
-@dataclass(frozen=True, slots=True)
-class MRCommentAuthor:
-    id: int
-    username: str
-    name: str
-
-
-@dataclass(frozen=True, slots=True)
-class MRComment:
-    id: int
-    system: bool
-    author: MRCommentAuthor
-
-
-@dataclass(frozen=True, slots=True)
-class MRComments:
-    comments: list[MRComment]
-
-    def code_review_already_performed(self, token_owner: TokenOwner) -> bool:
-        for comment in self.comments:
-            if not comment.system:
-                if self._review_account_is_comment_author(comment.author.id, token_owner.id):
-                    return True
-        return False
-
-    def _review_account_is_comment_author(
-        self, comment_author_id: int, token_owner_id: int
-    ) -> bool:
-        return comment_author_id == token_owner_id
 
 
 @dataclass(frozen=True, slots=True)

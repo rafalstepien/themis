@@ -7,12 +7,11 @@ import httpx
 from src.engine.domain.models import (
     DiffRefs,
     MergeRequest,
-    MRComments,
     ReviewComment,
 )
 from src.engine.ports.outbound import (
     GitProviderPort,
-)  # Assuming GitHubPort inherits or mirrors this
+)
 
 from .dto import (
     GitHubCommentDTO,
@@ -21,7 +20,7 @@ from .dto import (
     GitHubUserDTO,
 )
 from .exceptions import handle_github_api_errors, handle_github_data_errors
-from .mappers import pr_comments_to_domain, pr_to_domain, token_owner_to_domain
+from .mappers import pr_to_domain, token_owner_to_domain
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +106,8 @@ class GitHubClient(GitProviderPort):
         with handle_github_data_errors():
             dto = GitHubPullRequestDTO.model_validate(pr_data)
 
-        return pr_to_domain(dto)
+        comments = self._get_mr_comments()
+        return pr_to_domain(dto, comments)
 
     def get_token_owner_details(self):
         url = f"{self.BASE_API_URL}/user"
@@ -121,7 +121,7 @@ class GitHubClient(GitProviderPort):
 
         return token_owner_to_domain(dto)
 
-    def get_mr_comments(self) -> MRComments:
+    def _get_mr_comments(self) -> list[GitHubCommentDTO]:
         # Every pull request is an issue, but not every issue is a pull request.
         # General conversation uses the issues comments endpoint, whereas line-specific code feedback uses the pull request review comments endpoint.
         issues_url = (
@@ -142,7 +142,7 @@ class GitHubClient(GitProviderPort):
             general_comments = [GitHubCommentDTO.model_validate(c) for c in issues_response.json()]
             review_comments = [GitHubCommentDTO.model_validate(c) for c in review_response.json()]
 
-        return pr_comments_to_domain(general_comments, review_comments)
+        return general_comments + review_comments
 
     def _get_branch_file_content(self, file_path: str, branch: str) -> str:
         """Fetch raw file content from a specific branch, decoding base64."""

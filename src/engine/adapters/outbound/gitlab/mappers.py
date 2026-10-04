@@ -5,13 +5,12 @@ from src.engine.domain.models import (
     MergeRequest,
     MRComment,
     MRCommentAuthor,
-    MRComments,
     TokenOwner,
 )
 
 from .dto import (
     DiffRefsDTO,
-    GitLabNotesResponseDTO,
+    GitLabNoteDTO,
     MergeRequestDTO,
     TokenOwnerIdentityDTO,
 )
@@ -19,6 +18,7 @@ from .dto import (
 
 def mr_to_domain(
     dto: MergeRequestDTO,
+    comments: list[GitLabNoteDTO],
 ) -> MergeRequest:
     return MergeRequest.create(
         mr_id=str(dto.iid),
@@ -38,6 +38,18 @@ def mr_to_domain(
             for c in dto.changes
         ],
         diff_refs=_to_diff_refs(dto.diff_refs),
+        comments=[
+            MRComment(
+                id=c.id,
+                system=c.system,
+                author=MRCommentAuthor(
+                    id=c.author.id,
+                    username=c.author.username,
+                    name=c.author.name,
+                ),
+            )
+            for c in comments
+        ],
     )
 
 
@@ -59,23 +71,6 @@ def _to_diff_refs(dto: DiffRefsDTO | None) -> DiffRefs | None:
     if dto is None:
         return None
     return DiffRefs(base_sha=dto.base_sha, start_sha=dto.start_sha, head_sha=dto.head_sha)
-
-
-def mr_comments_to_domain(dto: GitLabNotesResponseDTO) -> MRComments:
-    return MRComments(
-        comments=[
-            MRComment(
-                id=c.id,
-                system=c.system,
-                author=MRCommentAuthor(
-                    id=c.author.id,
-                    username=c.author.username,
-                    name=c.author.name,
-                ),
-            )
-            for c in dto.notes
-        ]
-    )
 
 
 def token_owner_to_domain(dto: TokenOwnerIdentityDTO) -> TokenOwner:

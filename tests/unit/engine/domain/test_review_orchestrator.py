@@ -4,7 +4,7 @@ from unittest.mock import Mock
 import pytest
 
 from src.bootstrap.config import ReviewConfig
-from src.engine.domain.models import MRComment, MRCommentAuthor, MRComments, TokenOwner
+from src.engine.domain.models import MRComment, MRCommentAuthor, TokenOwner
 from src.engine.domain.review_orchestrator import ReviewOrchestrator
 
 from .factories import (
@@ -19,7 +19,6 @@ from .factories import (
 @pytest.fixture
 def gitlab_client_mock() -> Mock:
     client = Mock()
-    client.get_mr_comments.return_value = MRComments(comments=[])
     client.get_mr_data.return_value = MergeRequestFactory()
     return client
 
@@ -121,7 +120,7 @@ def test_execute__does_not_rerun_code_review_when_already_present(gitlab_client_
         username="username",
         name="User Name",
     )
-    gitlab_client_mock.get_mr_comments.return_value = MRComments(
+    gitlab_client_mock.get_mr_data.return_value = MergeRequestFactory(
         comments=[MRComment(id=12345, system=False, author=mr_comment_author)]
     )
 
@@ -160,3 +159,23 @@ def test_execute__skips_cohorts_comment_when_configured(gitlab_client_mock: Mock
 
     gitlab_client_mock.post_general_comment.assert_not_called()
     review_mock.build_general_cohort_comment.assert_not_called()
+
+
+def test_execute__posts_cohorts_comment(gitlab_client_mock: Mock):
+    review_mock = Mock(comments=[])
+    review_mock.build_general_cohort_comment = Mock(return_value=ReviewCommentFactory())
+
+    llm_client_mock = Mock()
+    llm_client_mock.generate_code_review.return_value = review_mock
+
+    o = ReviewOrchestrator(
+        review_config=ReviewConfig(skip_cohorts_comment=False),
+        git_provider_port=gitlab_client_mock,
+        llm_port=llm_client_mock,
+        business_context_port=Mock(),
+        module_context_port=Mock(),
+    )
+
+    o.execute()
+
+    assert gitlab_client_mock.post_general_comment.called

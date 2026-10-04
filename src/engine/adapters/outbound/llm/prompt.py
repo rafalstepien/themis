@@ -32,7 +32,7 @@ Raise comments for things that are absent in the implementation, but should be t
 
 ### Rules
   - When there are no additional comments to be made in the Merge Request, and the proposed changes are good enough, respond with empty code_review_comments list (`[]`)
-  - Use correct markdown formatting for comment content. Wrap all code-related concepts (paths, classes, functions, variables, keywords) in backticks (\``). Use bold text for structural emphasis (e.g., **Problem:**), but strictly avoid using Markdown headers (# or ##) to ensure the comment remains compact and readable in a standard PR interface.
+  - Use correct markdown formatting for comment content. Wrap all code-related concepts (paths, classes, functions, variables, keywords) in backticks (`). Structure every comment with `###` headings for **Problem**, **How it breaks**, and **Suggested fix**. Put a blank line after each heading and between sections. Do not use `#` or `##` headings.
   - Each comment must, in its `content`:
     - Name the specific file and describe the problem concisely
     - Explain the risk or consequence and suggest a concrete fix
@@ -61,16 +61,26 @@ Raise comments for things that are absent in the implementation, but should be t
 
 
 ### Comment format template
-[Problem] One concise sentence naming the issue.
-[How it breaks] A step-by-step breakdown or concrete scenario of how the code fails in practice.
-[Suggested Fix] description of the suggested fix, corrected code sample, or list of potential solutions to be considered in this scenario instead.
+```markdown
+### Problem
+
+One concise sentence naming the issue.
+
+### How it breaks
+
+A step-by-step breakdown or concrete scenario of how the code fails in practice.
+
+### Suggested fix
+
+Description of the suggested fix, corrected code sample, or list of potential solutions to be considered in this scenario instead.
+```
 
 
 ### Good comments examples
 **Example 1: Hardcoded path**
 ```json
 {
-  "content": "**Problem:** The script hardcodes an absolute path tied to a specific user's local setup.\n**How it breaks:**\n* Another developer clones the repository into `~/projects/themis`.\n* They execute `scripts/run_github.sh`.\n* The script crashes with a `File not found` error because it is looking for your specific `~/repos/sandbox/...` directory.\n**The Fix:** Invoke the script using a relative path: `uv run main.py github`.",
+  "content": "### Problem\n\nThe script hardcodes an absolute path tied to a specific user's local setup.\n\n### How it breaks\n\n* Another developer clones the repository into `~/projects/themis`.\n* They execute `scripts/run_github.sh`.\n* The script crashes with a `File not found` error because it is looking for your specific `~/repos/sandbox/...` directory.\n\n### Suggested fix\n\nInvoke the script using a relative path: `uv run main.py github`.",
   "file_path": "scripts/run_github.sh",
   "line": 1
 }
@@ -79,7 +89,7 @@ Raise comments for things that are absent in the implementation, but should be t
 **Example 2: Consecutive `if` statements**
 ```json
 {
-  "content": "**Problem:** Using consecutive `if` statements causes the program to incorrectly trigger the final `else` fallback block.\n**How it breaks (Example: `git_provider == \"gitlab\"`):**\n1. The first statement (`if git_provider == \"gitlab\"`) evaluates to `True`. `GitLabCLIAdapter` runs successfully.\n2. Execution continues to the next independent `if` statement.\n3. Because the provider is \"gitlab\", this second check evaluates to `False`.\n4. The code falls into the attached `else` block, incorrectly logging an error and crashing the app with `sys.exit(1)`.\n**The Fix:** Change `if git_provider == \"github\":` to `elif git_provider == \"github\":`.",
+  "content": "### Problem\n\nUsing consecutive `if` statements causes the program to incorrectly trigger the final `else` fallback block.\n\n### How it breaks\n\nExample: `git_provider == \"gitlab\"`\n\n1. The first statement (`if git_provider == \"gitlab\"`) evaluates to `True`. `GitLabCLIAdapter` runs successfully.\n2. Execution continues to the next independent `if` statement.\n3. Because the provider is \"gitlab\", this second check evaluates to `False`.\n4. The code falls into the attached `else` block, incorrectly logging an error and crashing the app with `sys.exit(1)`.\n\n### Suggested fix\n\nChange `if git_provider == \"github\":` to `elif git_provider == \"github\":`.",
   "file_path": "src/themis/main.py",
   "line": 15
 }
@@ -87,7 +97,7 @@ Raise comments for things that are absent in the implementation, but should be t
 **Example 3: Architecture violation**
 ```json
 {
-  "content": "**Problem:** The `orders` domain imports and instantiates `CatalogService` directly, creating a hard dependency.\n**How it breaks:**\n* The `orders` domain becomes tightly coupled to `catalog`'s internal implementation.\n* It bypasses the anti-corruption layer, meaning any data model changes in `catalog` will directly bleed into and break `orders` logic.\n* If `CatalogService` changes its initialization, the `orders` domain fails to execute.\n**The Fix:** Reserve stock through an injected port realized by a catalog gateway adapter instead.",
+  "content": "### Problem\n\nThe `orders` domain imports and instantiates `CatalogService` directly, creating a hard dependency.\n\n### How it breaks\n\n* The `orders` domain becomes tightly coupled to `catalog`'s internal implementation.\n* It bypasses the anti-corruption layer, meaning any data model changes in `catalog` will directly bleed into and break `orders` logic.\n* If `CatalogService` changes its initialization, the `orders` domain fails to execute.\n\n### Suggested fix\n\nReserve stock through an injected port realized by a catalog gateway adapter instead.",
   "references": [ { "kind": "architecture", "module": "orders" } ],
   "file_path": "src/orders/domain/services.py",
   "line": 42
@@ -97,7 +107,7 @@ Raise comments for things that are absent in the implementation, but should be t
 **Example 4: Rule violation**
 ```json
 {
-  "content": "**Problem:** The `price` variable uses a `float` to represent a monetary value.\n**How it breaks:**\n* Floating-point math cannot precisely represent base-10 decimals (e.g., `0.1 + 0.2` evaluates to `0.30000000000000004`).\n* When calculating totals, taxes, or applying discounts, these micro-errors compound.\n* This leads to incorrect final customer charges or accounting mismatches in the database.\n**The Fix:** Use the shared `Money` value object (integer minor units).",
+  "content": "### Problem\n\nThe `price` variable uses a `float` to represent a monetary value.\n\n### How it breaks\n\n* Floating-point math cannot precisely represent base-10 decimals (e.g., `0.1 + 0.2` evaluates to `0.30000000000000004`).\n* When calculating totals, taxes, or applying discounts, these micro-errors compound.\n* This leads to incorrect final customer charges or accounting mismatches in the database.\n\n### Suggested fix\n\nUse the shared `Money` value object (integer minor units).",
   "references": [ { "kind": "rule", "module": "catalog", "rule": "Represent money as integer minor units, never as float." } ],
   "file_path": "src/catalog/domain/pricing.py",
   "line": 17
